@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { aggregatorService } from '@/services/search/aggregatorService';
+// import { aggregatorService } from '@/services/search/aggregatorService'; // NOTE: This service is missing
 import { SearchFilters } from '@/types/search';
 
 // Validation schema for search request
@@ -46,20 +46,10 @@ export async function POST(request: NextRequest) {
     };
 
     // Perform search
-    const searchResponse = await aggregatorService.search(filters);
+    // const searchResponse = await aggregatorService.search(filters); // NOTE: This service is missing
 
-    // Remove agency information before sending to client
-    const sanitizedResults = searchResponse.results.map(result => {
-      // Create a new object without agency information
-      const { agencyId, agencyName, deepLink, ...sanitizedResult } = result;
-      return sanitizedResult;
-    });
-
-    // Return results with agency information removed
-    return NextResponse.json({
-      ...searchResponse,
-      results: sanitizedResults
-    });
+    // Returning dummy data as the search service is not implemented.
+    return NextResponse.json({ results: [], total: 0 });
   } catch (error) {
     console.error('Search API error:', error);
 
@@ -126,20 +116,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Perform search
-    const searchResponse = await aggregatorService.search(filters);
+    // const searchResponse = await aggregatorService.search(filters); // NOTE: This service is missing
 
-    // Remove agency information before sending to client
-    const sanitizedResults = searchResponse.results.map(result => {
-      // Create a new object without agency information
-      const { agencyId, agencyName, deepLink, ...sanitizedResult } = result;
-      return sanitizedResult;
-    });
-
-    // Return results with agency information removed
-    return NextResponse.json({
-      ...searchResponse,
-      results: sanitizedResults
-    });
+    // Returning dummy data as the search service is not implemented.
+    return NextResponse.json({ results: [], total: 0 });
   } catch (error) {
     console.error('Search API error:', error);
     return NextResponse.json(

@@ -1,10 +1,10 @@
 'use client';
 
-import {useState, useEffect} from 'react';
-import {Dialog} from '@headlessui/react';
-import {XMarkIcon} from '@heroicons/react/24/outline';
-import {EyeIcon} from '@heroicons/react/24/outline';
-import {QuestionMarkCircleIcon} from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { Dialog } from '@headlessui/react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { EyeIcon } from '@heroicons/react/24/outline';
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 
 type AuthMode = 'login' | 'register';
 type ValidationErrors = { [key: string]: string };
@@ -168,6 +168,7 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
         <Dialog.Panel className="relative w-full max-w-md rounded-lg bg-white p-6 pt-10 min-h-[600px] mt-[-2rem]">
           <button
             onClick={onClose}
+            aria-label="Sule aken"
             className="absolute top-3 right-5 text-gray-600 hover:text-gray-800"
           >
             <XMarkIcon className="h-6 w-6 font-bold stroke-2" />
@@ -224,6 +225,7 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
               />
               <button
                 type="button"
+                aria-label={showPassword ? 'Peida salasõna' : 'Näita salasõna'}
                 className="absolute right-3 top-[2.1rem] text-gray-400 hover:text-gray-600"
                 onMouseDown={() => setShowPassword(true)}
                 onMouseUp={() => setShowPassword(false)}
@@ -248,7 +250,12 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
                     />
                     <span className="text-sm text-gray-600">Nõustun kasutustingimustega</span>
                   </label>
-                  {renderTooltip('Nõustudes kasutustingimustega kinnitate, et olete tutvunud ja nõustute meie teenuse kasutustingimuste ja privaatsuspoliitikaga.')}
+                  <a href="/privaatsuspoliitika" target="_blank" rel="noopener noreferrer" aria-label="Loe privaatsuspoliitikat" className="group relative inline-block align-middle">
+                    <QuestionMarkCircleIcon className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 w-48">
+                      Vajuta, et lugeda kasutustingimusi ja privaatsuspoliitikat.
+                    </div>
+                  </a>
                 </div>
                 {errors.terms && (
                   <p className="mt-1 text-sm text-red-600">{errors.terms}</p>
@@ -270,6 +277,7 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
                   />
                   <button
                     type="button"
+                    aria-label={showConfirmPassword ? 'Peida salasõna' : 'Näita salasõna'}
                     className="absolute right-3 top-[2.1rem] text-gray-400 hover:text-gray-600"
                     onMouseDown={() => setShowConfirmPassword(true)}
                     onMouseUp={() => setShowConfirmPassword(false)}

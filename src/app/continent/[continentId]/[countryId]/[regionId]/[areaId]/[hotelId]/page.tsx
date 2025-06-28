@@ -49,7 +49,7 @@ export default function HotelPage() {
   
   if (loading) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 pt-20">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
         </div>
@@ -59,7 +59,7 @@ export default function HotelPage() {
   
   if (!hotel) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 pt-20">
         <h1 className="text-2xl font-bold mb-4">Hotelli ei leitud</h1>
         <p>Kahjuks ei leitud soovitud hotelli.</p>
         <Link href={`/continent/${continentId}/${countryId}/${regionId}/${areaId}`} className="text-orange-500 hover:underline">
@@ -70,7 +70,7 @@ export default function HotelPage() {
   }
   
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 pt-20">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{hotel.name}</h1>
         <div className="flex items-center mb-4">

@@ -45,7 +45,7 @@ export default function Navbar() {
               <div className="relative" ref={departureMenuRef}>
                 <button
                   onClick={() => setIsDepartureMenuOpen(!isDepartureMenuOpen)}
-                  className="text-slate-600 hover:text-slate-900 flex items-center gap-1"
+                  className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50 flex items-center gap-1"
                 >
                   {t('nav.calendar')}
                   <svg
@@ -83,10 +83,10 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-              <Link href="/packages" className="text-slate-600 hover:text-slate-900">
+              <Link href="/packages" className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50">
                 {t('nav.packages')}
               </Link>
-              <Link href="/contact" className="text-slate-600 hover:text-slate-900">
+              <Link href="/contact" className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50">
                 {t('nav.contact')}
               </Link>
               </div>
@@ -95,6 +95,7 @@ export default function Navbar() {
                 href="https://www.facebook.com/profile.php?id=100093667945980" 
                 target="_blank" 
                 rel="noopener noreferrer" 
+                aria-label="Facebook"
                 className="text-[#1877F2] hover:opacity-90 inline-flex items-center"
               >
                 <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -109,6 +110,7 @@ export default function Navbar() {
                   setLanguage(newLang);
                   i18n.changeLanguage(newLang);
                 }}
+                aria-label="Keele valik"
                 className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-orange-500 focus:border-orange-500 p-1.5"
               >
                 <option value="et">🇪🇪 ET</option>
