@@ -1,4 +1,5 @@
 import { ServerActionComponent } from '@/types/server-action';
+import { DepartureCity } from '@/types/destinations';
 
 export interface DepartureCalendarProps extends ServerActionComponent {
   departureCities: DepartureCity[];

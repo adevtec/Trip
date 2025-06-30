@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDefaultAggregator, SearchParams } from '@/services';
+import { getDefaultAggregator, SearchParams } from '@/app/api';
 
 /**
  * Travel Search API Route

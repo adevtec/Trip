@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDefaultAggregator } from '@/services';
+import { getDefaultAggregator } from '@/app/api';
 
 /**
  * Travel Providers Health Check

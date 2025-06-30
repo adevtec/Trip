@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { SearchResult } from '@/types/search';
+import { TravelOffer } from '@/app/api/base/types';
 import { Building, Calendar, MapPin, Star, Utensils, ArrowUpDown, Filter, X } from 'lucide-react';
 import Image from 'next/image';
 import { format } from 'date-fns';
@@ -18,7 +18,7 @@ export default function SearchResultsPage() {
   const router = useRouter();
 
   // State for search results
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [results, setResults] = useState<TravelOffer[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -69,8 +69,8 @@ export default function SearchResultsPage() {
         pageSize: 100 // Load more results at once for virtualization
       };
 
-      // Call search API
-      const response = await fetch('/api/search', {
+      // Call search API (updated to use new travel API)
+      const response = await fetch('/api/travel/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,10 +85,26 @@ export default function SearchResultsPage() {
 
       const data = await response.json();
 
-      // Update state with results
-      setResults(data.results);
-      setTotalResults(data.totalResults);
-      setAvailableFilters(data.filters);
+      // Process the new API response format
+      if (data.success && data.results) {
+        // Flatten all offers from all providers
+        const allOffers = data.results.reduce((acc: any[], providerResult: any) => {
+          if (providerResult.offers) {
+            return acc.concat(providerResult.offers);
+          }
+          return acc;
+        }, []);
+
+        // Update state with flattened results
+        setResults(allOffers);
+        setTotalResults(allOffers.length);
+        // Note: availableFilters not available in new API, using empty object
+        setAvailableFilters({});
+      } else {
+        setResults([]);
+        setTotalResults(0);
+        setAvailableFilters({});
+      }
 
       // Update filters state based on URL params
       setFilters({
@@ -428,14 +444,14 @@ export default function SearchResultsPage() {
  * Result card component
  * Displays a single search result
  */
-function ResultCard({ result }: { result: SearchResult }) {
+function ResultCard({ result }: { result: TravelOffer }) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4 h-[280px] flex">
       {/* Image */}
       <div className="w-1/3 relative">
         <Image
-          src={result.images[0] || '/placeholder.jpg'}
-          alt={result.hotelName}
+          src={result.hotel.images?.[0] || '/placeholder.jpg'}
+          alt={result.hotel.name}
           fill
           style={{ objectFit: 'cover' }}
         />
@@ -445,9 +461,9 @@ function ResultCard({ result }: { result: SearchResult }) {
       <div className="w-2/3 p-4 flex flex-col">
         {/* Header */}
         <div className="mb-2">
-          <h2 className="text-xl font-bold">{result.hotelName}</h2>
+          <h2 className="text-xl font-bold">{result.hotel.name}</h2>
           <div className="flex items-center gap-1 text-yellow-500">
-            {Array.from({ length: result.hotelRating }).map((_, i) => (
+            {Array.from({ length: result.hotel.rating }).map((_, i) => (
               <Star key={i} size={16} fill="currentColor" />
             ))}
           </div>
@@ -456,13 +472,13 @@ function ResultCard({ result }: { result: SearchResult }) {
         {/* Location */}
         <div className="flex items-center gap-1 text-gray-600 mb-1">
           <MapPin size={16} />
-          <span>{result.location.resort}, {result.location.area}, {result.location.country}</span>
+          <span>{result.resort}, {result.destination}</span>
         </div>
 
         {/* Departure */}
         <div className="flex items-center gap-1 text-gray-600 mb-1">
           <Building size={16} />
-          <span>Väljumine: {result.departureCity}</span>
+          <span>Väljumine: {result.departure.city}</span>
         </div>
 
         {/* Dates */}
@@ -478,28 +494,25 @@ function ResultCard({ result }: { result: SearchResult }) {
         {/* Meal plan */}
         <div className="flex items-center gap-1 text-gray-600 mb-1">
           <Utensils size={16} />
-          <span>{result.mealPlan} ({result.mealPlanCode})</span>
+          <span>{result.mealPlan}</span>
         </div>
 
         {/* Room type */}
         <div className="text-gray-600 mb-1">
-          <span>Tuba: {result.roomType}</span>
+          <span>Tuba: {result.room.type}</span>
         </div>
 
         {/* Price and button */}
         <div className="mt-auto flex justify-between items-end">
           <div>
-            {result.originalPrice && (
-              <div className="text-gray-500 line-through">
-                {result.originalPrice} €
+            <div className="text-2xl font-bold text-orange-600">
+              {result.price.total} {result.price.currency}
+            </div>
+            {result.price.perPerson && (
+              <div className="text-sm text-gray-500">
+                {result.price.perPerson} {result.price.currency} inimese kohta
               </div>
             )}
-            <div className="text-2xl font-bold text-orange-600">
-              {result.price} €
-            </div>
-            <div className="text-sm text-gray-500">
-              {result.pricePerPerson} € inimese kohta
-            </div>
           </div>
 
           <button className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600">

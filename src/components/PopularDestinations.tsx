@@ -14,7 +14,7 @@ export default function PopularDestinations() {
     getHotelsByCountry('egypt').find(h => h.id === 'sunrise-royal-makadi'),
     getHotelsByCountry('turkey').find(h => h.id === 'royal-holiday-palace'),
     getHotelsByCountry('turkey').find(h => h.id === 'alaiye-resort')
-  ].filter(Boolean); // Filter out any undefined values
+  ].filter((hotel): hotel is NonNullable<typeof hotel> => hotel !== undefined); // Type-safe filter
 
   return (
     <section className="py-16 px-4">
@@ -28,15 +28,15 @@ export default function PopularDestinations() {
               className="group relative overflow-hidden rounded-lg aspect-[4/3] shadow-lg"
             >
               <Image
-                src={hotel.images[0]}
-                alt={hotel.name}
+                src={hotel.images?.[0] || '/placeholder-hotel.jpg'}
+                alt={hotel.name || 'Hotel'}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent
                             transition-opacity duration-300 group-hover:opacity-90" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                <h3 className="text-xl font-semibold mb-2">{hotel.name}</h3>
+                <h3 className="text-xl font-semibold mb-2">{hotel.name || 'Unknown Hotel'}</h3>
                 <p className="text-lg">Alates €599</p>
               </div>
               <div className="absolute inset-0 flex items-center justify-center opacity-0

@@ -87,7 +87,7 @@ import { ApiClient } from '../api-integration/lib/http-client';
 ### After (services)
 ```typescript
 import { useNovitDestinations } from '@/hooks/novit';
-import { getDefaultAggregator } from '@/services';
+import { getDefaultAggregator } from '@/app/api';
 ```
 
 ## Environment Variables
