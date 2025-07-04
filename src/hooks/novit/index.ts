@@ -1,6 +1,6 @@
 /**
  * NovIT React Hooks
- * Moved from api-integration/hooks/
+ * Integrated with unified travel API system
  */
 
 // Core hooks

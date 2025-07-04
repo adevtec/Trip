@@ -16,7 +16,7 @@ interface UseApiOptions {
 
 /**
  * Üldine API hook NovIT integratsiooni jaoks
- * Moved from api-integration/hooks/useApi.ts
+ * Integrated with unified travel API system
  */
 export function useApi<T = any>(
   apiCall: () => Promise<T>,

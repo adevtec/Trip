@@ -2,6 +2,7 @@ import { ProviderConfig } from './base/types';
 import { TravelAggregator } from './base/aggregator';
 import { NovITProvider } from './providers/novit/provider';
 import { JoinUpProvider } from './providers/joinup/provider';
+import { TezTourProvider } from './providers/tez-tour/provider';
 
 /**
  * Provider configurations
@@ -28,10 +29,10 @@ const providerConfigs: Record<string, ProviderConfig> = {
     priority: 2
   },
   
-  // Future providers (disabled by default)
+  // TEZ Tour provider (from analyzed old system)
   tez: {
     name: 'TEZ Tour',
-    enabled: false,
+    enabled: process.env.TEZ_TOUR_PROVIDER_ENABLED === 'true' || false,
     timeout: 15000,
     retries: 3,
     priority: 3
@@ -66,17 +67,17 @@ export function createTravelAggregator(): TravelAggregator {
     aggregator.registerProvider(novitProvider);
   }
 
-  // Register JoinUp provider (with mock data for now)
+  // Register JoinUp provider
   if (providerConfigs.joinup.enabled) {
     const joinupProvider = new JoinUpProvider(providerConfigs.joinup);
     aggregator.registerProvider(joinupProvider);
   }
 
-  // TODO: Add other providers as they become available
-  // if (providerConfigs.tez.enabled) {
-  //   const tezProvider = new TEZProvider(providerConfigs.tez);
-  //   aggregator.registerProvider(tezProvider);
-  // }
+  // Register TEZ Tour provider
+  if (providerConfigs.tez.enabled) {
+    const tezProvider = new TezTourProvider(providerConfigs.tez);
+    aggregator.registerProvider(tezProvider);
+  }
 
   return aggregator;
 }

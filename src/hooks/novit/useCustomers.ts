@@ -13,7 +13,7 @@ interface UpdateCustomerCountriesPayload {
 
 /**
  * Hook kliendi andmete haldamiseks NovIT API kaudu  
- * Moved and adapted from api-integration/hooks/useCustomers.ts
+ * Integrated with unified travel API system
  */
 export function useCustomerCountries() {
   const {
