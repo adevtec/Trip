@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getHotelById } from '@/data/mock';
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { getHotelById } from "@/data/mock";
 
 /**
  * Hotel redirect page
@@ -20,22 +20,29 @@ export default function HotelRedirectPage() {
 
       if (hotel) {
         // Get the continent ID from the country
-        let continentId = '';
-        if (hotel.countryId === 'turkey' || hotel.countryId === 'cyprus') {
-          continentId = 'asia';
-        } else if (hotel.countryId === 'egypt') {
-          continentId = 'africa';
-        } else if (hotel.countryId === 'greece' || hotel.countryId === 'spain' || hotel.countryId === 'italy' || hotel.countryId === 'bulgaria') {
-          continentId = 'europe';
+        let continentId = "";
+        if (hotel.countryId === "turkey" || hotel.countryId === "cyprus") {
+          continentId = "asia";
+        } else if (hotel.countryId === "egypt") {
+          continentId = "africa";
+        } else if (
+          hotel.countryId === "greece" ||
+          hotel.countryId === "spain" ||
+          hotel.countryId === "italy" ||
+          hotel.countryId === "bulgaria"
+        ) {
+          continentId = "europe";
         } else {
-          continentId = 'europe'; // Default to Europe if unknown
+          continentId = "europe"; // Default to Europe if unknown
         }
 
-        // Redirect to the full URL
-        router.push(`/continent/${continentId}/${hotel.countryId}/${hotel.regionId}/${hotel.areaId}/${hotelId}`);
+        // Redirect to the full URL (use replace to not break browser back)
+        router.replace(
+          `/continent/${continentId}/${hotel.countryId}/${hotel.regionId}/${hotel.areaId}/${hotelId}`
+        );
       } else {
         // If hotel not found, redirect to home
-        router.push('/');
+        router.replace("/");
       }
     };
 

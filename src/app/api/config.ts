@@ -1,8 +1,8 @@
-import { ProviderConfig } from './base/types';
-import { TravelAggregator } from './base/aggregator';
-import { NovITProvider } from './providers/novit/provider';
-import { JoinUpProvider } from './providers/joinup/provider';
-import { TezTourProvider } from './providers/tez-tour/provider';
+import { ProviderConfig } from "./base/types";
+import { TravelAggregator } from "./base/aggregator";
+import { NovITProvider } from "./providers/novit/provider";
+import { JoinUpProvider } from "./providers/joinup/provider";
+import { TezTourProvider } from "./providers/tez-tour/provider";
 
 /**
  * Provider configurations
@@ -10,49 +10,49 @@ import { TezTourProvider } from './providers/tez-tour/provider';
  */
 const providerConfigs: Record<string, ProviderConfig> = {
   novit: {
-    name: 'NovIT (NovaTours)',
-    enabled: process.env.NOVIT_PROVIDER_ENABLED === 'true' || false,
+    name: "NovIT (NovaTours)",
+    enabled: process.env.NOVIT_PROVIDER_ENABLED === "true" || false,
     apiKey: process.env.NOVIT_API_KEY,
-    baseUrl: process.env.NOVIT_API_BASE_URL || 'https://api.novit.ee',
+    baseUrl: process.env.NOVIT_API_BASE_URL || "https://api.novit.ee",
     timeout: 15000,
     retries: 3,
-    priority: 1
+    priority: 1,
   },
-  
+
   joinup: {
-    name: 'JoinUp Travel',
-    enabled: process.env.JOINUP_PROVIDER_ENABLED === 'true' || false,
+    name: "JoinUp Travel",
+    enabled: process.env.JOINUP_PROVIDER_ENABLED === "true" || false,
     apiKey: process.env.JOINUP_API_KEY,
-    baseUrl: process.env.JOINUP_API_BASE_URL || 'https://api.joinup.ee',
+    baseUrl: process.env.JOINUP_API_BASE_URL || "https://api.joinup.ee",
     timeout: 15000,
     retries: 3,
-    priority: 2
+    priority: 2,
   },
-  
+
   // TEZ Tour provider (from analyzed old system)
   tez: {
-    name: 'TEZ Tour',
-    enabled: process.env.TEZ_TOUR_PROVIDER_ENABLED === 'true' || false,
+    name: "TEZ Tour",
+    enabled: process.env.TEZ_TOUR_PROVIDER_ENABLED === "true" || false,
     timeout: 15000,
     retries: 3,
-    priority: 3
+    priority: 3,
   },
-  
+
   anex: {
-    name: 'ANEX Tour',
+    name: "ANEX Tour",
     enabled: false,
     timeout: 15000,
     retries: 3,
-    priority: 4
+    priority: 4,
   },
-  
+
   coral: {
-    name: 'Coral Travel',
+    name: "Coral Travel",
     enabled: false,
     timeout: 15000,
     retries: 3,
-    priority: 5
-  }
+    priority: 5,
+  },
 };
 
 /**
@@ -99,11 +99,14 @@ export function getAllProviderConfigs(): Record<string, ProviderConfig> {
 /**
  * Update provider configuration
  */
-export function updateProviderConfig(providerName: string, updates: Partial<ProviderConfig>): void {
+export function updateProviderConfig(
+  providerName: string,
+  updates: Partial<ProviderConfig>
+): void {
   if (providerConfigs[providerName]) {
     providerConfigs[providerName] = {
       ...providerConfigs[providerName],
-      ...updates
+      ...updates,
     };
   }
 }

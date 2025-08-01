@@ -1,0 +1,144 @@
+SOOVITUSED OTSINGUMOOTORIGA ARVESTADES TULEVIKU KOOSTÖÖD MITME REISIBÜROOGA
+
+Analüüsides projekti struktuuri ja otsingumootori arhitektuuri, annan järgmised soovitused mitme reisibüroo koostöö jaoks:
+
+🏗️ SOOVITUSED OTSINGUMOOTORIGA ARVESTADES TULEVIKU KOOSTÖÖD MITME REISIBÜROOGA
+
+1. PROVIDER PATTERN JUBA KASUTUSEL ✅
+Sinu projekt kasutab juba väga head lähenemist:
+- TravelProvider abstraktne klass
+- TravelAggregator ühendab kõik providerid
+- Igale reisibüroole oma provider klass (NovITProvider, TezTourProvider, jne)
+
+2. ÜHTNE API STRUKTUUR ✅
+- SearchParams - ühtne otsingupäringute formaat
+- TravelOffer - standardiseeritud pakkumise struktuur
+- SearchResult - ühtne vastuste formaat
+
+3. LISASOOVITUSED ARHITEKTUURI TÄIUSTAMISEKS:
+
+A. PARALLEELSED PÄRINGUD JA TIMEOUT HALDUS
+// Juba tehtud aggregator.ts-s
+const searchPromises = enabledProviders.map(async (provider) => {
+  return this.executeWithTimeout(
+    provider.search(params),
+    provider.getConfig().timeout || this.defaultTimeout
+  );
+});
+
+B. CACHING STRATEEGIA
+- Provider-spetsiifiline cache (juba NovIT-s)
+- Agregeeritud tulemuste cache
+- TTL (Time To Live) seaded provider-põhiselt
+
+C. VEAKÄITLUS JA FAILOVER
+// Kui üks provider ebaõnnestub, teised jätkavad
+catch (error) {
+  console.error(`❌ Error searching ${provider.getName()}:`, error);
+  return {
+    provider: provider.getName(),
+    offers: [],
+    success: false,
+    error: error.message
+  };
+}
+
+4. SOOVITUSED TÄIENDAMISEKS:
+
+A. RATE LIMITING
+class RateLimiter {
+  private providerLimits: Map<string, number> = new Map();
+  
+  async canMakeRequest(providerName: string): Promise<boolean> {
+    // Implementeeri rate limiting loogika
+  }
+}
+
+B. RESPONSE NORMALIZATION
+class ResponseNormalizer {
+  static normalizeOffer(rawOffer: any, provider: string): TravelOffer {
+    // Teisenda provider-spetsiifiline vastus ühtlaseks formaadiks
+  }
+}
+
+C. PRIORITY SYSTEM
+interface ProviderConfig {
+  priority: number; // 1-10, kõrgem number = kõrgem prioriteet
+  weight: number;   // Tulemuste kaalutamine
+}
+
+D. CIRCUIT BREAKER PATTERN
+class CircuitBreaker {
+  private failureCount: number = 0;
+  private state: 'closed' | 'open' | 'half-open' = 'closed';
+  
+  async execute<T>(fn: () => Promise<T>): Promise<T> {
+    // Implementeeri circuit breaker loogika
+  }
+}
+
+5. OTSINGUMOOTORI TÄIUSTUSED:
+
+A. BULK SEARCH SUPPORT
+async bulkSearch(searches: SearchParams[]): Promise<SearchResult[][]> {
+  // Toetab mitme otsingu korraga tegemist
+}
+
+B. SMART AGGREGATION
+class SmartAggregator {
+  // Eelistab kiiremaid providereid
+  // Kombineerib sarnaseid pakkumisi
+  // Rakendab intelligentset sorteerimist
+}
+
+C. REAL-TIME UPDATES
+// WebSocket või SSE tugi reaalajas hindade uuendamiseks
+interface RealTimeUpdates {
+  onPriceChange: (offerId: string, newPrice: number) => void;
+  onAvailabilityChange: (offerId: string, available: boolean) => void;
+}
+
+6. MONITORING JA ANALYTICS:
+
+A. PROVIDER PERFORMANCE TRACKING
+interface ProviderMetrics {
+  responseTime: number;
+  successRate: number;
+  errorRate: number;
+  dataQuality: number;
+}
+
+B. SEARCH ANALYTICS
+// Jälgi, millised otsingud on populaarsed
+// Millised providerid annavad parimaid tulemusi
+// Kasutaja käitumine tulemuste lehel
+
+7. KONFIGURATSIOON JA HALDUS:
+
+A. DYNAMIC PROVIDER CONFIGURATION
+// Providerite sisse/välja lülitamine runtime ajal
+// A/B testimine erinevate provider kombinatsioonidega
+
+B. FEATURE FLAGS
+interface FeatureFlags {
+  enableParallelSearch: boolean;
+  enableSmartCaching: boolean;
+  enableRealTimeUpdates: boolean;
+}
+
+8. JÄRGMISED SAMMUD:
+
+1. Täienda TravelAggregator klassi circuit breaker ja rate limiting funktsioonidega
+2. Loo ResponseNormalizer provider-spetsiifiliste vastuste standardiseerimiseks
+3. Implementeeri SmartCache strateegia erinevate TTL-idega
+4. Lisa monitoring provider performance'i jälgimiseks
+5. Loo admin interface providerite haldamiseks
+
+KOKKUVÕTE:
+Sinu praegune arhitektuur on väga hea alus - see võimaldab lihtsalt lisada uusi providereid ja hallata nende koostööd tsentraalselt. Põhirõhk peaks olema performance optimiseerimisel ja veakäitluse parandamisel.
+
+Provider pattern koos TravelAggregator-iga tagab:
+- Skaleeritavuse (uute providerite lisamise lihtsus)
+- Töökindluse (ühe provideri ebaõnnestumine ei mõjuta teisi)
+- Jõudluse (paralleelsed päringud)
+- Hallatavuse (tsentraalne konfiguratsioon)
