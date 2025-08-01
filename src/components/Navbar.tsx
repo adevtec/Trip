@@ -92,16 +92,16 @@ export default function Navbar() {
                   )}
                 </div>
                 <Link
-                  href="/meist"
-                  className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50"
-                >
-                  Meist
-                </Link>
-                <Link
                   href="/packages"
                   className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50"
                 >
                   {t("nav.packages")}
+                </Link>
+                <Link
+                  href="/meist"
+                  className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50"
+                >
+                  Meist
                 </Link>
                 <Link
                   href="/contact"
