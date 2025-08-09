@@ -109,6 +109,12 @@ export default function Navbar() {
                 >
                   {t("nav.contact")}
                 </Link>
+                <Link
+                  href="/faq"
+                  className="px-4 py-2 text-sm font-medium text-orange-500 bg-white border border-orange-500 rounded-md hover:bg-orange-50"
+                >
+                  KKK
+                </Link>
               </div>
               <div className="flex items-center space-x-4">
                 <a

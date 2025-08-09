@@ -5,7 +5,7 @@
 .gradient-text {
   font-family: var(--font-playfair);
   font-size: 40px;
-  background: linear-gradient(45deg, rgb(249, 115, 22), rgb(78, 205, 196));
+  background: linear-gradient(45deg, rgb(249, 115, 22), rgb(239, 68, 68));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
