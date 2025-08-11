@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import "../i18n/config";
 import AuthModal from "./AuthModal";
@@ -10,6 +10,7 @@ import DepartureCalendar from "./DepartureCalendar";
 import { departureCities, type DepartureCity } from "@/data/departureCities";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isDepartureMenuOpen, setIsDepartureMenuOpen] = useState(false);
@@ -41,7 +42,9 @@ export default function Navbar() {
           <div className="flex justify-between h-16 items-center">
             <Link
               href="/"
-              className="gradient-text text-xl sm:text-2xl whitespace-nowrap"
+              className={`${
+                pathname === "/" ? "brand-gradient-text" : "gradient-text"
+              } text-xl sm:text-2xl whitespace-nowrap`}
             >
               Eksootikareisid
             </Link>

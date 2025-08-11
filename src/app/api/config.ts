@@ -11,7 +11,7 @@ import { TezTourProvider } from "./providers/tez-tour/provider";
 const providerConfigs: Record<string, ProviderConfig> = {
   novit: {
     name: "NovIT (NovaTours)",
-    enabled: process.env.NOVIT_PROVIDER_ENABLED === "true" || false,
+    enabled: true, // Only enable this provider for now
     apiKey: process.env.NOVIT_API_KEY,
     baseUrl: process.env.NOVIT_API_BASE_URL || "https://api.novit.ee",
     timeout: 15000,
@@ -21,7 +21,7 @@ const providerConfigs: Record<string, ProviderConfig> = {
 
   joinup: {
     name: "JoinUp Travel",
-    enabled: process.env.JOINUP_PROVIDER_ENABLED === "true" || false,
+    enabled: false, // Disabled
     apiKey: process.env.JOINUP_API_KEY,
     baseUrl: process.env.JOINUP_API_BASE_URL || "https://api.joinup.ee",
     timeout: 15000,
@@ -32,7 +32,7 @@ const providerConfigs: Record<string, ProviderConfig> = {
   // TEZ Tour provider (from analyzed old system)
   tez: {
     name: "TEZ Tour",
-    enabled: process.env.TEZ_TOUR_PROVIDER_ENABLED === "true" || false,
+    enabled: false, // Disabled
     timeout: 15000,
     retries: 3,
     priority: 3,
