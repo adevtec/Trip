@@ -8,7 +8,7 @@ export default function Footer() {
           {/* Logo and Company Info */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center space-x-2">
-              <span className="gradient-text text-lg sm:text-xl whitespace-nowrap">Eksootikareisid</span>
+              <span className="brand-gradient-text text-lg sm:text-xl whitespace-nowrap">Eksootikareisid</span>
             </Link>
             <a href="https://www.facebook.com/profile.php?id=100093667945980" target="_blank" rel="noopener noreferrer" className="text-[#1877F2] hover:opacity-90 inline-block">
               <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
