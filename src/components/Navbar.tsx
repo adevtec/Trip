@@ -42,9 +42,7 @@ export default function Navbar() {
           <div className="flex justify-between h-16 items-center">
             <Link
               href="/"
-              className={`${
-                pathname === "/" ? "brand-gradient-text" : "gradient-text"
-              } text-xl sm:text-2xl whitespace-nowrap`}
+              className="brand-gradient-text text-xl sm:text-2xl whitespace-nowrap"
             >
               Eksootikareisid
             </Link>
