@@ -10,15 +10,15 @@ import {useRouter} from 'next/navigation';
 import {travelData, type TravelCity} from '@/lib/travel-data';
 import {type DepartureCity} from '@/data/departureCities';
 import {type City} from '@/data/regions';
-import RegionSelect from './components/RegionSelect';
-import TravelersInput, {type Traveler} from './components/TravelersInput';
-import AdvancedSearch from './components/AdvancedSearch';
-import DepartureCitySelect from './components/DepartureCitySelect';
+import RegionSelect from './SearchEngine/components/RegionSelect';
+import TravelersInput, {type Traveler} from './SearchEngine/components/TravelersInput';
+import AdvancedSearch from './SearchEngine/components/AdvancedSearch';
+import DepartureCitySelect from './SearchEngine/components/DepartureCitySelect';
 import type {DateRange} from 'react-day-picker';
 import DepartureCalendar from '@/components/DepartureCalendar';
 import {type Area, countries, type Country, type Resort} from '@/data/destinations';
-import AreaSelect from './components/AreaSelect';
-import NightsInput from './components/NightsInput';
+import AreaSelect from './SearchEngine/components/AreaSelect';
+import NightsInput from './SearchEngine/components/NightsInput';
 
 type NightsValue = number | string;
 

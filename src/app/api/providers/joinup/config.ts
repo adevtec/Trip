@@ -11,9 +11,8 @@ export const JOINUP_API_URLS = {
   production: 'https://online.joinupbaltic.eu/export/default.php?samo_action=api',
 } as const;
 
-export const JOINUP_API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? JOINUP_API_URLS.production
-  : JOINUP_API_URLS.development;
+// Always use production URL since development URL doesn't work
+export const JOINUP_API_BASE_URL = JOINUP_API_URLS.production;
 
 export const JOINUP_API_ENDPOINTS: JoinUpEndpoints = {
   // Core search endpoints

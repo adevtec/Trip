@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchJoinUpCities, fetchJoinUpDestinations } from '@/lib/joinup-api';
+import { fetchCities, fetchDestinations } from '@/app/api/providers/joinup/api';
 
 /**
  * GET /api/travel/data?type=cities|destinations|regions|hotels|meals|ratings
@@ -60,7 +60,8 @@ async function getCities() {
 
     // Add JoinUp cities
     try {
-      const joinUpCities = await fetchJoinUpCities();
+      const joinUpCitiesResult = await fetchCities();
+      const joinUpCities = joinUpCitiesResult.success ? (joinUpCitiesResult.cities || []) : [];
       cities.push(...joinUpCities.map(city => ({
         id: city.id,
         name: city.name,
@@ -74,13 +75,7 @@ async function getCities() {
     }
 
 
-    // Add other providers' cities here in the future
-    // try {
-    //   const novitCities = await fetchNovitCities();
-    //   cities.push(...novitCities);
-    // } catch (error) {
-    //   console.warn('Failed to fetch NovIT cities:', error);
-    // }
+    // Add other providers' cities here when they become available
 
     // Remove duplicates and sort
     const uniqueCities = Array.from(
@@ -124,7 +119,8 @@ async function getDestinations(cityId: string | null) {
 
     // Add JoinUp destinations
     try {
-      const joinUpDestinations = await fetchJoinUpDestinations(cityId);
+      const joinUpDestinationsResult = await fetchDestinations(cityId);
+      const joinUpDestinations = joinUpDestinationsResult.success ? (joinUpDestinationsResult.destinations || []) : [];
       destinations.push(...joinUpDestinations.map(dest => ({
         id: dest.id,
         name: dest.name,
@@ -170,7 +166,7 @@ async function getDestinations(cityId: string | null) {
  */
 async function getRegions(cityId: string | null, destinationId: string | null) {
   // TODO: Implement JoinUp towns endpoint when available
-  const regions = [];
+  const regions: any[] = [];
 
   return NextResponse.json({
     success: true,
@@ -191,7 +187,7 @@ async function getRegions(cityId: string | null, destinationId: string | null) {
  */
 async function getHotels(query: string) {
   // TODO: Implement JoinUp hotels endpoint
-  const hotels = [];
+  const hotels: any[] = [];
 
   return NextResponse.json({
     success: true,
@@ -264,7 +260,7 @@ async function getCheckinDates(cityId: string | null, destinationId: string | nu
 
     // Try to get JoinUp checkin dates
     try {
-      const joinupUrl = `/api/joinup/checkin?cityId=${cityId}${destinationId ? `&destinationId=${destinationId}` : ''}`;
+      const joinupUrl = `/api/providers/joinup/checkin?cityId=${cityId}${destinationId ? `&destinationId=${destinationId}` : ''}`;
       const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3001'}${joinupUrl}`);
 
       if (response.ok) {

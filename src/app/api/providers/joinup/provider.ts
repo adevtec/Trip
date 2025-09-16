@@ -21,7 +21,7 @@ import {
 } from './config';
 
 // Import our new client-side API functions
-import { fetchJoinUpCities, fetchJoinUpDestinations, searchJoinUpOffers } from '@/lib/joinup-api';
+import { fetchCities, fetchDestinations } from './api';
 
 /**
  * JoinUp Baltic Travel Provider
@@ -66,7 +66,8 @@ export class JoinUpProvider extends TravelProvider {
       }
 
       // Get cities and find city ID
-      const cities = await fetchJoinUpCities();
+      const citiesResult = await fetchCities();
+      const cities = citiesResult.success ? (citiesResult.cities || []) : [];
       const cityName = params.departureCities[0]; // Use first city
       const city = cities.find(c =>
         c.name.toLowerCase() === cityName.toLowerCase() ||
@@ -87,7 +88,8 @@ export class JoinUpProvider extends TravelProvider {
       // Get destinations if specified
       let destinationId = null;
       if (params.destination) {
-        const destinations = await fetchJoinUpDestinations(city.id);
+        const destinationsResult = await fetchDestinations(city.id);
+        const destinations = destinationsResult.success ? (destinationsResult.destinations || []) : [];
         const destination = destinations.find(d =>
           d.name.toLowerCase() === params.destination?.toLowerCase() ||
           d.nameAlt.toLowerCase() === params.destination?.toLowerCase()
@@ -127,8 +129,9 @@ export class JoinUpProvider extends TravelProvider {
         nights: params.nights || 7
       };
 
-      // Search for offers
-      const offers = await searchJoinUpOffers(joinUpSearchParams);
+      // TODO: Implement search functionality in providers/api.ts
+      // const offers = await searchJoinUpOffers(joinUpSearchParams);
+      const offers: any[] = [];
 
       // Convert to our standard format
       const standardOffers = offers.map(offer => this.convertOfferToStandard(offer));
@@ -507,13 +510,14 @@ export class JoinUpProvider extends TravelProvider {
       },
       availability: {
         spaces: 1,
-        status: joinUpOffer.availability || 'Available'
+        lastUpdated: new Date()
       },
-      included: [],
-      extras: [],
-      tags: ['joinup'],
-      metadata: {
-        joinUp: joinUpOffer.joinup || {}
+      providerData: {
+        provider: 'joinup',
+        included: [],
+        extras: [],
+        tags: ['joinup'],
+        metadata: joinUpOffer.joinup || {}
       }
     };
   }

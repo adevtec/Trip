@@ -1,9 +1,10 @@
 /**
  * JoinUp API client with automatic caching
- * Uses client-side cache to avoid repeated requests
+ * Makes direct calls to JoinUp Baltic API
  */
 
-import { cache, CachePresets } from './cache';
+import { cache, CachePresets } from '@/lib/cache';
+import { getJoinUpCredentials, JOINUP_API_BASE_URL } from './config';
 
 export interface JoinUpCity {
   id: string;
@@ -79,13 +80,13 @@ class JoinUpAPI {
   }
 
   /**
-   * Get all available departure cities
+   * Get all available departure cities from unified API
    */
   async getCities(): Promise<JoinUpCity[]> {
     return cache.getOrSet(
       'joinup_cities',
       async () => {
-        const response = await fetch(`${this.baseUrl}/api/joinup/cities`);
+        const response = await fetch(`${this.baseUrl}/api/providers/joinup/cities`);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch cities: ${response.statusText}`);
@@ -104,7 +105,7 @@ class JoinUpAPI {
   }
 
   /**
-   * Get destinations for a specific departure city
+   * Get destinations for a specific departure city from unified API
    */
   async getDestinations(cityId: string): Promise<JoinUpDestination[]> {
     const cacheKey = `joinup_destinations_${cityId}`;
@@ -112,7 +113,7 @@ class JoinUpAPI {
     return cache.getOrSet(
       cacheKey,
       async () => {
-        const response = await fetch(`${this.baseUrl}/api/joinup/destinations?cityId=${cityId}`);
+        const response = await fetch(`${this.baseUrl}/api/providers/joinup/destinations?cityId=${cityId}`);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch destinations: ${response.statusText}`);
@@ -131,36 +132,36 @@ class JoinUpAPI {
   }
 
   /**
-   * Search for travel offers
+   * Search for travel offers from unified API
    */
   async search(params: JoinUpSearchParams): Promise<JoinUpOffer[]> {
-    // Create cache key from search parameters
-    const cacheKey = `joinup_search_${JSON.stringify(params)}`.replace(/[^a-zA-Z0-9_]/g, '_');
+    const cacheKey = `joinup_search_${JSON.stringify(params)}`;
 
     return cache.getOrSet(
       cacheKey,
       async () => {
-        const response = await fetch(`${this.baseUrl}/api/joinup/search`, {
+        const response = await fetch(`${this.baseUrl}/api/providers/joinup/search`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(params),
+          cache: 'no-store'
         });
 
         if (!response.ok) {
-          throw new Error(`Search failed: ${response.statusText}`);
+          throw new Error(`Failed to search offers: ${response.statusText}`);
         }
 
         const data = await response.json();
 
         if (!data.success) {
-          throw new Error(data.error || 'Search failed');
+          throw new Error(data.error || 'Failed to search offers');
         }
 
-        return data.offers;
+        return data.offers || [];
       },
-      CachePresets.DYNAMIC
+      CachePresets.SHORT
     );
   }
 

@@ -17,9 +17,7 @@ export { TravelProvider } from './base/types';
 export { TravelAggregator } from './base/aggregator';
 
 // Provider implementations
-export { NovITProvider } from './providers/novit/provider';
 export { JoinUpProvider } from './providers/joinup/provider';
-export { TezTourProvider } from './providers/tez-tour/provider';
 
 // Configuration and setup
 export {

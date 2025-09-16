@@ -1,58 +1,21 @@
 import { ProviderConfig } from "./base/types";
 import { TravelAggregator } from "./base/aggregator";
-import { NovITProvider } from "./providers/novit/provider";
 import { JoinUpProvider } from "./providers/joinup/provider";
-import { TezTourProvider } from "./providers/tez-tour/provider";
 
 /**
  * Provider configurations
  * Add new providers here as they become available
  */
 const providerConfigs: Record<string, ProviderConfig> = {
-  novit: {
-    name: "NovIT (NovaTours)",
-    enabled: true, // Only enable this provider for now
-    apiKey: process.env.NOVIT_API_KEY,
-    baseUrl: process.env.NOVIT_API_BASE_URL || "https://api.novit.ee",
+  joinup: {
+    name: "JoinUp Travel",
+    enabled: true, // Currently the only active provider
+    apiKey: process.env.JOINUP_DEV_OAUTH_TOKEN,
+    baseUrl: process.env.JOINUP_API_BASE_URL || "https://online.joinupbaltic.eu/export/default.php?samo_action=api",
     timeout: 15000,
     retries: 3,
     priority: 1,
-  },
-
-  joinup: {
-    name: "JoinUp Travel",
-    enabled: false, // Disabled
-    apiKey: process.env.JOINUP_API_KEY,
-    baseUrl: process.env.JOINUP_API_BASE_URL || "https://api.joinup.ee",
-    timeout: 15000,
-    retries: 3,
-    priority: 2,
-  },
-
-  // TEZ Tour provider (from analyzed old system)
-  tez: {
-    name: "TEZ Tour",
-    enabled: false, // Disabled
-    timeout: 15000,
-    retries: 3,
-    priority: 3,
-  },
-
-  anex: {
-    name: "ANEX Tour",
-    enabled: false,
-    timeout: 15000,
-    retries: 3,
-    priority: 4,
-  },
-
-  coral: {
-    name: "Coral Travel",
-    enabled: false,
-    timeout: 15000,
-    retries: 3,
-    priority: 5,
-  },
+  }
 };
 
 /**
@@ -61,22 +24,10 @@ const providerConfigs: Record<string, ProviderConfig> = {
 export function createTravelAggregator(): TravelAggregator {
   const aggregator = new TravelAggregator();
 
-  // Register NovIT provider
-  if (providerConfigs.novit.enabled) {
-    const novitProvider = new NovITProvider(providerConfigs.novit);
-    aggregator.registerProvider(novitProvider);
-  }
-
-  // Register JoinUp provider
+  // Register JoinUp provider (currently the only active provider)
   if (providerConfigs.joinup.enabled) {
     const joinupProvider = new JoinUpProvider(providerConfigs.joinup);
     aggregator.registerProvider(joinupProvider);
-  }
-
-  // Register TEZ Tour provider
-  if (providerConfigs.tez.enabled) {
-    const tezProvider = new TezTourProvider(providerConfigs.tez);
-    aggregator.registerProvider(tezProvider);
   }
 
   return aggregator;
