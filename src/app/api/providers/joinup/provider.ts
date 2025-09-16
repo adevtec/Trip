@@ -1,24 +1,27 @@
 import { TravelProvider, SearchParams, SearchResult, TravelOffer, ProviderConfig } from '../../base/types';
-import { 
-  JoinUpConfig, 
-  JoinUpApiResponse, 
-  JoinUpCountry, 
-  JoinUpRegion, 
-  JoinUpMeal, 
-  JoinUpStar, 
-  JoinUpSearchParams, 
+import {
+  JoinUpConfig,
+  JoinUpApiResponse,
+  JoinUpCountry,
+  JoinUpRegion,
+  JoinUpMeal,
+  JoinUpStar,
+  JoinUpSearchParams,
   JoinUpOffer,
   JOINUP_DEPARTURE_CITIES,
-  JOINUP_COUNTRY_CORRESPONDENCE 
+  JOINUP_COUNTRY_CORRESPONDENCE
 } from './types';
-import { 
-  JOINUP_API_ENDPOINTS, 
-  DEFAULT_JOINUP_CONFIG, 
+import {
+  JOINUP_API_ENDPOINTS,
+  DEFAULT_JOINUP_CONFIG,
   JOINUP_REQUEST_HEADERS,
   JOINUP_PARSER_CONFIG,
   JOINUP_ERROR_CODES,
-  JOINUP_API_BASE_URL 
+  JOINUP_API_BASE_URL
 } from './config';
+
+// Import our new client-side API functions
+import { fetchJoinUpCities, fetchJoinUpDestinations, searchJoinUpOffers } from '@/lib/joinup-api';
 
 /**
  * JoinUp Baltic Travel Provider
@@ -42,39 +45,107 @@ export class JoinUpProvider extends TravelProvider {
 
   /**
    * Search for travel offers from JoinUp Baltic
+   * Now uses our new client-side API with caching
    */
   async search(params: SearchParams): Promise<SearchResult> {
     const startTime = Date.now();
-    
+
     try {
       console.log('🔍 JoinUp search started:', params);
-      
-      // Convert our standard params to JoinUp format
-      const joinUpParams = this.convertSearchParams(params);
-      
-      // Make API request
-      const response = await this.makeRequest('search', joinUpParams);
-      
-      if (!response.success) {
-        throw new Error(response.error || 'JoinUp search failed');
+
+      // Skip if no departure cities
+      if (!params.departureCities || params.departureCities.length === 0) {
+        console.log('⚠️ JoinUp search skipped: no departure cities');
+        return {
+          provider: 'joinup',
+          offers: [],
+          totalCount: 0,
+          searchTime: Date.now() - startTime,
+          success: true
+        };
       }
-      
-      // Parse response to our standard format
-      const offers = this.parseSearchResults(response.items?.item || []);
-      
-      console.log(`✅ JoinUp search completed: ${offers.length} offers found`);
-      
+
+      // Get cities and find city ID
+      const cities = await fetchJoinUpCities();
+      const cityName = params.departureCities[0]; // Use first city
+      const city = cities.find(c =>
+        c.name.toLowerCase() === cityName.toLowerCase() ||
+        c.nameAlt.toLowerCase() === cityName.toLowerCase()
+      );
+
+      if (!city) {
+        console.log(`⚠️ JoinUp search skipped: city "${cityName}" not found`);
+        return {
+          provider: 'joinup',
+          offers: [],
+          totalCount: 0,
+          searchTime: Date.now() - startTime,
+          success: true
+        };
+      }
+
+      // Get destinations if specified
+      let destinationId = null;
+      if (params.destination) {
+        const destinations = await fetchJoinUpDestinations(city.id);
+        const destination = destinations.find(d =>
+          d.name.toLowerCase() === params.destination?.toLowerCase() ||
+          d.nameAlt.toLowerCase() === params.destination?.toLowerCase()
+        );
+
+        if (destination) {
+          destinationId = destination.id;
+        } else {
+          console.log(`⚠️ JoinUp destination "${params.destination}" not found for ${cityName}`);
+          return {
+            provider: 'joinup',
+            offers: [],
+            totalCount: 0,
+            searchTime: Date.now() - startTime,
+            success: true
+          };
+        }
+      } else {
+        // If no destination specified, skip search
+        console.log('⚠️ JoinUp search skipped: no destination specified');
+        return {
+          provider: 'joinup',
+          offers: [],
+          totalCount: 0,
+          searchTime: Date.now() - startTime,
+          success: true
+        };
+      }
+
+      // Convert search parameters to JoinUp format
+      const joinUpSearchParams = {
+        cityId: city.id,
+        destinationId: destinationId,
+        adults: params.adults || 2,
+        children: params.children || 0,
+        checkin: params.departureDate ? params.departureDate.toISOString().split('T')[0] : undefined,
+        nights: params.nights || 7
+      };
+
+      // Search for offers
+      const offers = await searchJoinUpOffers(joinUpSearchParams);
+
+      // Convert to our standard format
+      const standardOffers = offers.map(offer => this.convertOfferToStandard(offer));
+
+      console.log(`✅ JoinUp search completed: ${standardOffers.length} offers found`);
+
       return {
         provider: 'joinup',
-        offers,
-        totalCount: offers.length,
+        offers: standardOffers,
+        totalCount: standardOffers.length,
         searchTime: Date.now() - startTime,
         success: true
       };
-      
+
     } catch (error) {
       console.error('❌ JoinUp search error:', error);
-      
+
       return {
         provider: 'joinup',
         offers: [],
@@ -391,5 +462,59 @@ export class JoinUpProvider extends TravelProvider {
     }
     
     return offers;
+  }
+
+  /**
+   * Convert JoinUp offer to our standard TravelOffer format
+   */
+  private convertOfferToStandard(joinUpOffer: any): TravelOffer {
+    return {
+      id: joinUpOffer.id || `joinup_${Math.random().toString(36).substr(2, 9)}`,
+      provider: 'joinup',
+      destination: joinUpOffer.destination || 'Unknown',
+      resort: joinUpOffer.resort || 'Unknown',
+      hotel: {
+        name: joinUpOffer.hotel?.name || 'Unknown Hotel',
+        rating: joinUpOffer.hotel?.rating || 3,
+        description: '',
+        images: joinUpOffer.hotel?.images || []
+      },
+      departureDate: joinUpOffer.departureDate ? new Date(joinUpOffer.departureDate) : new Date(),
+      returnDate: joinUpOffer.returnDate ? new Date(joinUpOffer.returnDate) : new Date(),
+      nights: joinUpOffer.nights || 7,
+      price: {
+        total: joinUpOffer.price?.total || 0,
+        currency: joinUpOffer.price?.currency || 'EUR',
+        perPerson: joinUpOffer.price?.perPerson || undefined
+      },
+      departure: {
+        city: joinUpOffer.departure?.city || 'Unknown',
+        airport: undefined,
+        time: undefined
+      },
+      room: {
+        type: joinUpOffer.room?.type || 'Standard',
+        occupancy: {
+          adults: joinUpOffer.room?.capacity || 2,
+          children: 0
+        }
+      },
+      mealPlan: joinUpOffer.mealPlan || 'BB',
+      cancellation: {
+        allowed: true,
+        deadline: undefined,
+        penalty: undefined
+      },
+      availability: {
+        spaces: 1,
+        status: joinUpOffer.availability || 'Available'
+      },
+      included: [],
+      extras: [],
+      tags: ['joinup'],
+      metadata: {
+        joinUp: joinUpOffer.joinup || {}
+      }
+    };
   }
 }

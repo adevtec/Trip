@@ -3,7 +3,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Check, Search} from 'lucide-react';
 import {type City} from '@/data/regions';
-import {countries} from '@/data/destinations';
+import {travelData, type TravelDestination} from '@/lib/travel-data';
 
 export interface RegionSelectProps {
   selectedCity: City | null;
@@ -14,7 +14,47 @@ export interface RegionSelectProps {
 
 export default function RegionSelect({ selectedCity, onSelectAction, selectedDepartureCities, onCloseAction }: RegionSelectProps)  {
   const [search, setSearch] = useState('');
+  const [destinations, setDestinations] = useState<TravelDestination[]>([]);
+  const [loading, setLoading] = useState(true);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Load destinations based on selected departure cities
+  useEffect(() => {
+    async function loadDestinations() {
+      if (selectedDepartureCities.length === 0) {
+        setDestinations([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const allDestinations: TravelDestination[] = [];
+
+        for (const cityId of selectedDepartureCities) {
+          try {
+            const cityDestinations = await travelData.getDestinations(cityId);
+            allDestinations.push(...cityDestinations);
+          } catch (error) {
+            console.warn(`Failed to load destinations for ${cityId}:`, error);
+          }
+        }
+
+        // Remove duplicates based on name
+        const uniqueDestinations = Array.from(
+          new Map(allDestinations.map(dest => [dest.name.toLowerCase(), dest])).values()
+        );
+
+        setDestinations(uniqueDestinations);
+      } catch (error) {
+        console.error('Failed to load destinations:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDestinations();
+  }, [selectedDepartureCities]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -26,12 +66,18 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onCloseAction]);
 
-  const filteredDestinations = countries.filter(country => {
-    const matchesSearch = country.name.toLowerCase().includes(search.toLowerCase());
-    const matchesDeparture = selectedDepartureCities.length === 0 || 
-      country.departureCities.some(city => selectedDepartureCities.includes(city));
-    return matchesSearch && matchesDeparture;
-  });
+  // Filter API destinations based on search
+  const filteredApiDestinations = destinations.filter(destination =>
+    destination.name.toLowerCase().includes(search.toLowerCase()) ||
+    destination.nameAlt.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Use only API destinations - no fallback to mock data
+  const displayDestinations = filteredApiDestinations.map(dest => ({
+    id: dest.id,
+    name: dest.name,
+    provider: dest.provider
+  }));
 
   // Destination click handler
   const handleDestinationClick = (destination: { id: string; name: string }) => {
@@ -61,33 +107,41 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
 
       {/* Destinations list */}
       <div className="max-h-64 overflow-y-auto p-2">
-        {filteredDestinations.map(destination => (
-          <label 
-            key={destination.id} 
-            className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50 rounded"
-            onClick={() => handleDestinationClick(destination)}
-          >
-            <div className="relative flex items-center justify-center w-4 h-4">
-              <input
-                type="radio"
-                checked={selectedCity?.id === destination.id}
-                onChange={() => handleDestinationClick(destination)}
-                className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-              />
-              {selectedCity?.id === destination.id && (
-                <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Loading destinations...</div>
+        ) : displayDestinations.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            {selectedDepartureCities.length === 0
+              ? 'Vali esmalt lähtekoht'
+              : 'Ühtegi sihtkohta ei leitud'}
+          </div>
+        ) : (
+          displayDestinations.map(destination => (
+            <label
+              key={destination.id}
+              className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-50 rounded"
+              onClick={() => handleDestinationClick(destination)}
+            >
+              <div className="relative flex items-center justify-center w-4 h-4">
+                <input
+                  type="radio"
+                  checked={selectedCity?.id === destination.id}
+                  onChange={() => handleDestinationClick(destination)}
+                  className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
+                />
+                {selectedCity?.id === destination.id && (
+                  <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
+                )}
+              </div>
+              <span className="text-sm">{destination.name}</span>
+              {destination.provider && (
+                <span className="ml-auto text-xs text-blue-500 capitalize">
+                  {destination.provider}
+                </span>
               )}
-            </div>
-            <span className="text-sm">{destination.name}</span>
-            {!selectedDepartureCities.some(city => destination.departureCities.includes(city)) && (
-              <span className="ml-auto text-xs text-orange-500">
-                {destination.departureCities.map(city => 
-                  city === 'warsaw' ? 'Warsaw' : city === 'riga' ? 'Riga' : ''
-                ).filter(Boolean).join(', ')}
-              </span>
-            )}
-          </label>
-        ))}
+            </label>
+          ))
+        )}
       </div>
     </div>
   );

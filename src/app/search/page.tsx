@@ -453,6 +453,7 @@ function ResultCard({ result }: { result: TravelOffer }) {
           src={result.hotel.images?.[0] || '/placeholder.jpg'}
           alt={result.hotel.name}
           fill
+          sizes="(max-width: 768px) 100vw, 33vw"
           style={{ objectFit: 'cover' }}
         />
       </div>

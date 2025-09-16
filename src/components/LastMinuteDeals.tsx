@@ -30,10 +30,11 @@ export default function LastMinuteDeals() {
                 className="bg-white rounded-lg overflow-hidden shadow-lg group"
               >
                 <div className="relative aspect-[4/3]">
-                  <Image
-                    src={hotel.images[0]}
-                    alt={hotel.name}
+                                    <Image
+                    src={hotel.images?.[0] || '/placeholder-hotel.jpg'}
+                    alt={hotel.name || 'Hotel'}
                     fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                   <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full">

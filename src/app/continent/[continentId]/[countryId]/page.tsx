@@ -68,11 +68,12 @@ export default function CountryPage() {
         <h1 className="text-3xl font-bold mb-2">{country.name}</h1>
         <p className="text-gray-600 mb-4">{country.description}</p>
         <div className="relative h-64 w-full rounded-lg overflow-hidden mb-6">
-          <Image
-            src={country.image}
+                    <Image
+            src={country.image || '/placeholder-country.jpg'}
             alt={country.name}
             fill
-            style={{ objectFit: 'cover' }}
+            sizes="100vw"
+            className="object-cover"
           />
         </div>
       </div>
@@ -90,11 +91,12 @@ export default function CountryPage() {
               className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="relative h-48 w-full">
-                <Image
-                  src={region.image}
+                                <Image
+                  src={region.image || '/placeholder-region.jpg'}
                   alt={region.name}
                   fill
-                  style={{ objectFit: 'cover' }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
               <div className="p-4">

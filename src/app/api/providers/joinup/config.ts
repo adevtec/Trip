@@ -5,19 +5,85 @@ import { JoinUpConfig, JoinUpEndpoints } from './types';
  * Based on analysis of eksootikareisid-old PHP implementation
  */
 
-export const JOINUP_API_BASE_URL = 'https://online.joinupbaltic.eu/export/default.php?samo_action=api';
+// Development and Production URLs
+export const JOINUP_API_URLS = {
+  development: 'https://devonline.joinupbaltic.eu/export/default.php?samo_action=api',
+  production: 'https://online.joinupbaltic.eu/export/default.php?samo_action=api',
+} as const;
+
+export const JOINUP_API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? JOINUP_API_URLS.production
+  : JOINUP_API_URLS.development;
 
 export const JOINUP_API_ENDPOINTS: JoinUpEndpoints = {
+  // Core search endpoints
+  townfroms: 'SearchTour_TOWNFROMS',
+  states: 'SearchTour_STATES',
+  checkin: 'SearchTour_CHECKIN',
+  nights: 'SearchTour_NIGHTS',
+  prices: 'SearchTour_PRICES',
+  hotels: 'SearchTour_HOTELS',
+
+  // Filter endpoints
+  stars: 'SearchTour_STARS',
+  meals: 'SearchTour_MEALS',
+  towns: 'SearchTour_TOWNS',
+
+  // Detail endpoints
+  hotelinfo: 'SearchTour_HOTELINFO',
+  room_placement: 'SearchTour_ROOM_PLACEMENT',
+  cancel_policies: 'SearchTour_CANCEL_POLICIES',
+  payment_policies: 'SearchTour_PAYMENT_POLICIES',
+
+  // Booking endpoints
+  calc: 'SearchTour_CALC',
+  booking: 'SearchTour_BRON',
+
+  // Currency endpoints
+  currencies: 'Currency_CURRENCIES',
+  rates: 'Currency_RATES',
+
+  // Flight endpoints
+  tickets_prices: 'Tickets_PRICES',
+
+  // Legacy mappings for backward compatibility
   search: 'SearchTour_PRICES',
   countries: 'SearchTour_STATES',
   regions: 'SearchTour_TOWNS',
-  meals: 'SearchTour_MEALS',
-  stars: 'SearchTour_STARS',
+};
+
+/**
+ * JoinUp API Credentials Configuration
+ * These should be set in environment variables
+ */
+export interface JoinUpCredentials {
+  oauth_token: string;
+  client_id: string;
+  client_secret: string;
+  partner: string;
+  partpass: string;
+  alias: string;
+  psw: string;
+}
+
+export const getJoinUpCredentials = (): JoinUpCredentials => {
+  const isDev = process.env.NODE_ENV !== 'production';
+  const prefix = isDev ? 'JOINUP_DEV_' : 'JOINUP_PROD_';
+
+  return {
+    oauth_token: process.env[`${prefix}OAUTH_TOKEN`] || '',
+    client_id: process.env[`${prefix}CLIENT_ID`] || '',
+    client_secret: process.env[`${prefix}CLIENT_SECRET`] || '',
+    partner: process.env[`${prefix}PARTNER`] || '',
+    partpass: process.env[`${prefix}PARTPASS`] || '',
+    alias: process.env[`${prefix}ALIAS`] || '',
+    psw: process.env[`${prefix}PSW`] || '',
+  };
 };
 
 export const DEFAULT_JOINUP_CONFIG: JoinUpConfig = {
   apiVersion: '1.0',
-  oauthToken: process.env.JOINUP_OAUTH_TOKEN || '001dc5113e5243adb608f85536e0a403', // From old system
+  oauthToken: getJoinUpCredentials().oauth_token,
   baseUrl: JOINUP_API_BASE_URL,
 };
 

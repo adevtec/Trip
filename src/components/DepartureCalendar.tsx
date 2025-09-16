@@ -3,8 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {type DepartureCity} from '@/data/departureCities';
-import {trips} from '@/data/trips';
-import {getDestinationName} from '@/data/destinations';
+import {travelData, type TravelCheckinDate} from '@/lib/travel-data';
 
 /**
  * Interface representing a trip with departure date and destinations
@@ -13,6 +12,10 @@ interface Trip {
   date: Date;
   destinations: string[];
   price: number;
+  availableOffers?: number;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  provider?: string;
 }
 
 /**
@@ -24,15 +27,6 @@ interface DepartureCalendarProps {
   onClose: () => void;
   onDateSelect?: (date: Date) => void;
 }
-const getTripsForCity = (cityId: string): Trip[] => {
-  return trips
-    .filter(trip => trip.departureCityId === cityId)
-    .map(trip => ({
-      date: new Date(trip.departureDate),
-      destinations: [getDestinationName(trip.destinationId)],
-      price: trip.price
-    }));
-};
 
 const WEEK_DAYS = ['E', 'T', 'K', 'N', 'R', 'L', 'P'] as const;
 const CURRENT_DATE = new Date(2025, 1, 20); // Current date from metadata
@@ -48,8 +42,62 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
   const { t } = useTranslation();
   const [selectedMonth, setSelectedMonth] = useState(CURRENT_MONTH);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [apiTrips, setApiTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const modalRef = React.useRef<HTMLDivElement>(null);
+
+  // Load check-in dates from API when component opens or cities change
+  useEffect(() => {
+    if (!isOpen || !departureCities || departureCities.length === 0) {
+      setApiTrips([]);
+      setLoading(false);
+      return;
+    }
+
+    async function loadCheckinDates() {
+      try {
+        setLoading(true);
+        const allTrips: Trip[] = [];
+
+        // Load checkin dates for each selected departure city
+        for (const city of departureCities) {
+          try {
+            const checkinDates = await travelData.getCheckinDates(city.id);
+
+            // Convert API checkin dates to Trip format
+            const cityTrips = checkinDates.map((checkin: TravelCheckinDate) => ({
+              date: new Date(checkin.date),
+              destinations: checkin.destinations,
+              price: checkin.minPrice || 0, // Use min price as main price
+              availableOffers: checkin.availableOffers,
+              minPrice: checkin.minPrice,
+              maxPrice: checkin.maxPrice,
+              provider: checkin.provider
+            }));
+
+            allTrips.push(...cityTrips);
+          } catch (error) {
+            console.warn(`Failed to load checkin dates for ${city.id}:`, error);
+          }
+        }
+
+        // Remove duplicates based on date
+        const uniqueTrips = Array.from(
+          new Map(allTrips.map(trip => [trip.date.toISOString().split('T')[0], trip])).values()
+        );
+
+        setApiTrips(uniqueTrips);
+      } catch (error) {
+        console.error('Failed to load API trip data:', error);
+        setApiTrips([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadCheckinDates();
+  }, [isOpen, departureCities]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,8 +115,8 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
   if (!isOpen) return null;
   if (!departureCities || departureCities.length === 0) return null;
 
-  // Kombineerime kõigi valitud linnade reisid
-  const allTrips = departureCities.flatMap(city => getTripsForCity(city.id));
+  // Use only API trips - no fallback to mock data
+  const allTrips = apiTrips;
   
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month + 1, 0).getDate();
@@ -113,11 +161,23 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
         >
           {dayNumber > 0 && dayNumber <= daysInMonth ? dayNumber : ''}
           {hoveredDate?.getDate() === dayNumber && trip && (
-            <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 bg-orange-500 text-white shadow-lg rounded-lg px-2.5 py-1.5 mb-2 text-sm w-max max-w-[160px] group-hover:visible">
+            <div className="absolute z-10 bottom-full left-1/2 transform -translate-x-1/2 bg-orange-500 text-white shadow-lg rounded-lg px-2.5 py-1.5 mb-2 text-sm w-max max-w-[180px] group-hover:visible">
               <div className="flex flex-col items-center -my-0.5">
                 {trip.destinations.map((dest, index) => (
                   <div key={index} className="whitespace-nowrap leading-5">{dest}</div>
                 ))}
+                {trip.availableOffers && (
+                  <div className="text-xs opacity-90 mt-1">
+                    {trip.availableOffers} pakkumist
+                  </div>
+                )}
+                {(trip.minPrice || trip.maxPrice) && (
+                  <div className="text-xs opacity-90 mt-0.5">
+                    {trip.minPrice && trip.maxPrice && trip.minPrice !== trip.maxPrice
+                      ? `${trip.minPrice}€ - ${trip.maxPrice}€`
+                      : `${trip.minPrice || trip.maxPrice}€`}
+                  </div>
+                )}
               </div>
               <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-orange-500"></div>
             </div>
@@ -185,7 +245,14 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1 relative">
+            {loading && (
+              <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
+                <div className="text-gray-500 text-sm">
+                  Laen kuupäevi...
+                </div>
+              </div>
+            )}
             {renderCalendarDays()}
           </div>
 

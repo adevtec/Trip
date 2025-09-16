@@ -68,10 +68,11 @@ export default function ContinentPage() {
         <p className="text-gray-600 mb-4">{continent.description}</p>
         <div className="relative h-64 w-full rounded-lg overflow-hidden mb-6">
           <Image
-            src={continent.image}
+            src={continent.image || '/placeholder-continent.jpg'}
             alt={continent.name}
             fill
-            style={{ objectFit: 'cover' }}
+            sizes="100vw"
+            className="object-cover"
           />
         </div>
       </div>
@@ -90,10 +91,11 @@ export default function ContinentPage() {
             >
               <div className="relative h-48 w-full">
                 <Image
-                  src={country.image}
+                  src={country.image || '/placeholder-country.jpg'}
                   alt={country.name}
                   fill
-                  style={{ objectFit: 'cover' }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
               <div className="p-4">

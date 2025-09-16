@@ -9,11 +9,10 @@ export default function Hero() {
     <div className="relative h-[80vh] min-h-[600px] w-full">
       <Image
         src={TRAVEL_IMAGES.hero}
-        alt="Exotic travel destination"
+        alt="Eksootilised reisid - Avasta maailma"
         fill
+        sizes="100vw"
         className="object-cover"
-        priority
-        quality={90}
       />
       <div className="absolute inset-0 bg-black/40" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4">

@@ -1,13 +1,14 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Building, Calendar, MapPin} from 'lucide-react';
 import {format} from 'date-fns';
 import {et} from 'date-fns/locale';
 import {useRouter} from 'next/navigation';
 
-import {departureCities, type DepartureCity} from '@/data/departureCities';
+import {travelData, type TravelCity} from '@/lib/travel-data';
+import {type DepartureCity} from '@/data/departureCities';
 import {type City} from '@/data/regions';
 import RegionSelect from './components/RegionSelect';
 import TravelersInput, {type Traveler} from './components/TravelersInput';
@@ -25,8 +26,11 @@ export default function SearchEngine() {
   const { t } = useTranslation();
   const router = useRouter();
 
+  // API data state
+  const [apiCities, setApiCities] = useState<TravelCity[]>([]);
+
   // Search state
-  const [selectedDepartureCities, setSelectedDepartureCities] = useState<string[]>(['tallinn']); // Default to Tallinn
+  const [selectedDepartureCities, setSelectedDepartureCities] = useState<string[]>([]);
   const [isDepartureCityOpen, setIsDepartureCityOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState<City | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -57,6 +61,26 @@ export default function SearchEngine() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
+
+  // Load cities from API
+  useEffect(() => {
+    async function loadCities() {
+      try {
+        const citiesData = await travelData.getCities();
+        setApiCities(citiesData);
+        // No auto-selection - user must manually select departure city
+      } catch (error) {
+        console.error('Failed to load cities:', error);
+      }
+    }
+    loadCities();
+  }, []); // Load cities only once on mount
+
+  // Helper function to get city display name
+  const getCityDisplayName = (cityId: string): string => {
+    const apiCity = apiCities.find(city => city.id === cityId);
+    return apiCity?.name || cityId;
+  };
 
   const handleSearch = async () => {
     // Validate required fields - only departure city is required
@@ -204,9 +228,7 @@ export default function SearchEngine() {
                   <Building className="w-4 h-4 text-gray-400" />
                   <div className="flex-1 truncate">
                     {selectedDepartureCities.length > 0
-                      ? selectedDepartureCities.map(id =>
-                          departureCities.find(city => city.id === id)?.name
-                        ).join(', ')
+                      ? selectedDepartureCities.map(getCityDisplayName).join(', ')
                       : 'Vali lähtekoht'}
                   </div>
                 </button>
@@ -214,7 +236,6 @@ export default function SearchEngine() {
                   <DepartureCitySelect
                     selectedCities={selectedDepartureCities}
                     onChangeAction={setSelectedDepartureCities}
-                    cities={departureCities}
                     onCloseAction={() => setIsDepartureCityOpen(false)}
                   />
                 )}
@@ -312,8 +333,16 @@ export default function SearchEngine() {
                 {isCalendarOpen && selectedDepartureCities.length > 0 && (
                   <DepartureCalendar
                     departureCities={selectedDepartureCities
-                      .map(id => departureCities.find(city => city.id === id))
-                      .filter((city): city is DepartureCity => city !== undefined)}
+                      .map(id => {
+                        const apiCity = apiCities.find(city => city.id === id);
+                        return apiCity ? {
+                          id: apiCity.id,
+                          name: apiCity.name,
+                          code: apiCity.code,
+                          country: apiCity.country
+                        } : null;
+                      })
+                      .filter((city): city is DepartureCity => city !== null)}
                     isOpen={isCalendarOpen}
                     onClose={() => setIsCalendarOpen(false)}
                     onDateSelect={(date) => {

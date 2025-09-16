@@ -3,19 +3,36 @@
 import {useEffect, useRef, useState} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Building, Check, Search, X} from 'lucide-react';
-import {type DepartureCity} from '@/data/departureCities';
+import {travelData, type TravelCity} from '@/lib/travel-data';
 
 export interface DepartureCitySelectProps {
   selectedCities: string[];
   onChangeAction: (cities: string[]) => void;
-  cities: DepartureCity[];
   onCloseAction: () => void;
 }
 
-export default function DepartureCitySelect({ selectedCities, onChangeAction, cities, onCloseAction }: DepartureCitySelectProps) {
+export default function DepartureCitySelect({ selectedCities, onChangeAction, onCloseAction }: DepartureCitySelectProps) {
   const { t } = useTranslation();
   const [search, setSearch] = useState('');
+  const [cities, setCities] = useState<TravelCity[]>([]);
+  const [loading, setLoading] = useState(true);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Load cities from API
+  useEffect(() => {
+    async function loadCities() {
+      try {
+        setLoading(true);
+        const citiesData = await travelData.getCities();
+        setCities(citiesData);
+      } catch (error) {
+        console.error('Failed to load cities:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadCities();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -65,23 +82,27 @@ export default function DepartureCitySelect({ selectedCities, onChangeAction, ci
 
         {/* Cities List */}
         <div className="max-h-64 overflow-y-auto">
-          {cities
-            .filter(city => city.name.toLowerCase().includes(search.toLowerCase()))
-            .map((city) => (
-              <button
-                key={city.id}
-                onClick={() => handleCityToggle(city.id)}
-                className={`w-full px-4 py-2 text-left hover:bg-orange-50 flex items-center gap-2 ${
-                  selectedCities.includes(city.id) ? 'text-gray-900' : 'text-gray-700'
-                }`}
-              >
-                <Building className="w-4 h-4 text-gray-400" />
-                <span>{city.name}</span>
-                {selectedCities.includes(city.id) && (
-                  <Check className="w-4 h-4 ml-auto text-green-500" />
-                )}
-              </button>
-            ))}
+          {loading ? (
+            <div className="p-4 text-center text-gray-500">Loading cities...</div>
+          ) : (
+            cities
+              .filter(city => city.name.toLowerCase().includes(search.toLowerCase()))
+              .map((city) => (
+                <button
+                  key={city.id}
+                  onClick={() => handleCityToggle(city.id)}
+                  className={`w-full px-4 py-2 text-left hover:bg-orange-50 flex items-center gap-2 ${
+                    selectedCities.includes(city.id) ? 'text-gray-900' : 'text-gray-700'
+                  }`}
+                >
+                  <Building className="w-4 h-4 text-gray-400" />
+                  <span>{city.name} ({city.country})</span>
+                  {selectedCities.includes(city.id) && (
+                    <Check className="w-4 h-4 ml-auto text-green-500" />
+                  )}
+                </button>
+              ))
+          )}
         </div>
       </div>
     </div>

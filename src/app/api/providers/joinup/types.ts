@@ -10,11 +10,40 @@ export interface JoinUpConfig {
 }
 
 export interface JoinUpEndpoints {
+  // Core search endpoints
+  townfroms: string;
+  states: string;
+  checkin: string;
+  nights: string;
+  prices: string;
+  hotels: string;
+
+  // Filter endpoints
+  stars: string;
+  meals: string;
+  towns: string;
+
+  // Detail endpoints
+  hotelinfo: string;
+  room_placement: string;
+  cancel_policies: string;
+  payment_policies: string;
+
+  // Booking endpoints
+  calc: string;
+  booking: string;
+
+  // Currency endpoints
+  currencies: string;
+  rates: string;
+
+  // Flight endpoints
+  tickets_prices: string;
+
+  // Legacy mappings for backward compatibility
   search: string;
   countries: string;
   regions: string;
-  meals: string;
-  stars: string;
 }
 
 export interface JoinUpCountry {

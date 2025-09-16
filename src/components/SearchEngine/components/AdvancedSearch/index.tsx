@@ -1,10 +1,9 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {useTranslation} from 'react-i18next';
 import {Check, Search} from 'lucide-react';
-import {hotels} from '@/data/hotels';
-import {mealPlans} from '@/data/mealPlans';
+import {travelData, type TravelMealPlan, type TravelRating, type TravelHotel} from '@/lib/travel-data';
 import {type City} from '@/data/regions';
 
 interface AdvancedSearchProps {
@@ -21,36 +20,53 @@ interface AdvancedSearchProps {
   selectedCity: City | null;
 }
 
-const HOTEL_RATINGS = [
-  { value: '5', label: '5 tärni', type: 'STARS' },
-  { value: '4', label: '4 tärni', type: 'STARS' },
-  { value: '3', label: '3 tärni', type: 'STARS' },
-  { value: 'APT', label: 'Apartemendid', type: 'TYPE' },
-  { value: 'HV1', label: 'Holiday Village', type: 'TYPE' },
-  { value: 'SPECIAL', label: 'Special', type: 'TYPE' },
-  { value: 'VILLA', label: 'Villa', type: 'TYPE' }
-];
 
-const MEAL_PLANS = [
-  { value: 'UAI', label: 'UAI - Ultra kõik hinnas' },
-  { value: 'AI', label: 'AI - Kõik hinnas' },
-  { value: 'FB', label: 'FB - Hommiku-, lõuna- ja õhtusöök' },
-  { value: 'HB', label: 'HB - Hommiku- ja õhtusöök' },
-  { value: 'BB', label: 'BB - Hommikusöök' },
-  { value: 'RO', label: 'RO - Toitlustuseta' }
-];
 
-const LOCATIONS = [
-  { value: 'beach-first', label: 'Esimene rannariba' },
-  { value: 'beach-second', label: 'Teine rannariba' },
-  { value: 'center-500m', label: 'Keskusest kuni 500m' },
-  { value: 'center-1000m', label: 'Keskusest kuni 1000m' },
-  { value: 'quiet', label: 'Vaikne piirkond' }
-];
 
 export default function AdvancedSearch({ values, onChangeAction, selectedCity }: AdvancedSearchProps) {
   const { t } = useTranslation();
   const [hotelSearch, setHotelSearch] = useState('');
+  const [apiMealPlans, setApiMealPlans] = useState<TravelMealPlan[]>([]);
+  const [apiRatings, setApiRatings] = useState<TravelRating[]>([]);
+  const [apiHotels, setApiHotels] = useState<TravelHotel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load data from API
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true);
+        const [mealPlansData, ratingsData] = await Promise.all([
+          travelData.getMealPlans(),
+          travelData.getRatings()
+        ]);
+        setApiMealPlans(mealPlansData);
+        setApiRatings(ratingsData);
+      } catch (error) {
+        console.error('Failed to load advanced search data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Load hotels when search query changes
+  useEffect(() => {
+    if (hotelSearch.length >= 2) {
+      async function loadHotels() {
+        try {
+          const hotelsData = await travelData.getHotels(hotelSearch);
+          setApiHotels(hotelsData);
+        } catch (error) {
+          console.error('Failed to load hotels:', error);
+        }
+      }
+      loadHotels();
+    } else {
+      setApiHotels([]);
+    }
+  }, [hotelSearch]);
 
   const handleToggle = (field: string, value: string) => {
     const currentValues = values[field];
@@ -63,12 +79,31 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
     onChangeAction({ ...values, [field]: newValues });
   };
 
-  const filteredHotels = hotels.filter(hotel => {
+  // Use only API data - no fallback to mock data
+  const displayRatings = apiRatings.map(rating => ({
+    value: rating.id,
+    label: rating.name,
+    type: 'STARS'
+  }));
+
+  const displayMealPlans = apiMealPlans.map(plan => ({
+    value: plan.id,
+    label: `${plan.code} - ${plan.name}`
+  }));
+
+  // Use only API hotels
+  const allHotels = apiHotels.map(hotel => ({
+    id: hotel.id,
+    name: hotel.name,
+    rating: [hotel.provider || 'api']
+  }));
+
+  const filteredHotels = allHotels.filter(hotel => {
     const matchesSearch = hotel.name.toLowerCase().includes(hotelSearch.toLowerCase());
     const matchesRegion = !selectedCity || hotel.id === selectedCity.id;
-    const matchesRating = values.hotelRating.length === 0 || 
+    const matchesRating = values.hotelRating.length === 0 ||
       values.hotelRating.some(rating => hotel.rating.includes(rating));
-    
+
     return matchesSearch && matchesRegion && matchesRating;
   });
 
@@ -83,49 +118,35 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
             <div>
               <div className="text-sm text-gray-600 mb-2">Tärnid</div>
               <div className="space-y-2">
-                {HOTEL_RATINGS.filter(r => r.type === 'STARS').map(rating => (
-                  <label key={rating.value} className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input
-                        type="checkbox"
-                        checked={values.hotelRating.includes(rating.value)}
-                        onChange={() => handleToggle('hotelRating', rating.value)}
-                        className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                      />
-                      {values.hotelRating.includes(rating.value) && (
-                        <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
-                      )}
-                    </div>
-                    <div className="flex gap-1 text-orange-400">
-                      {Array(parseInt(rating.value)).fill('★')}
-                    </div>
-                  </label>
-                ))}
+                {loading ? (
+                  <div className="text-xs text-gray-500">Loading...</div>
+                ) : (
+                  displayRatings.map(rating => (
+                    <label key={rating.value} className="flex items-center gap-2 cursor-pointer">
+                      <div className="relative flex items-center justify-center w-4 h-4">
+                        <input
+                          type="checkbox"
+                          checked={values.hotelRating.includes(rating.value)}
+                          onChange={() => handleToggle('hotelRating', rating.value)}
+                          className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
+                        />
+                        {values.hotelRating.includes(rating.value) && (
+                          <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
+                        )}
+                      </div>
+                      <div className="flex gap-1 text-orange-400">
+                        {rating.label.includes('⭐') ? (
+                          <span className="text-sm">{rating.label}</span>
+                        ) : (
+                          Array(parseInt(rating.value)).fill('★')
+                        )}
+                      </div>
+                    </label>
+                  ))
+                )}
               </div>
             </div>
 
-            {/* Types */}
-            <div>
-              <div className="text-sm text-gray-600 mb-2">Tüüp</div>
-              <div className="space-y-2">
-                {HOTEL_RATINGS.filter(r => r.type === 'TYPE').map(rating => (
-                  <label key={rating.value} className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input
-                        type="checkbox"
-                        checked={values.hotelRating.includes(rating.value)}
-                        onChange={() => handleToggle('hotelRating', rating.value)}
-                        className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                      />
-                      {values.hotelRating.includes(rating.value) && (
-                        <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
-                      )}
-                    </div>
-                    <span className="text-sm">{rating.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -172,47 +193,29 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
         <div className="bg-gray-50 rounded-lg p-4">
           <div className="font-medium mb-3">Toitlustus</div>
           <div className="space-y-2 overflow-y-auto h-[280px] pr-2">
-            {MEAL_PLANS.map(plan => (
-              <label key={plan.value} className="flex items-center gap-2 cursor-pointer">
-                <div className="relative flex items-center justify-center w-4 h-4">
-                  <input
-                    type="checkbox"
-                    checked={values.mealPlans.includes(plan.value)}
-                    onChange={() => handleToggle('mealPlans', plan.value)}
-                    className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                  />
-                  {values.mealPlans.includes(plan.value) && (
-                    <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
-                  )}
-                </div>
-                <span className="text-sm">{plan.label}</span>
-              </label>
-            ))}
+            {loading ? (
+              <div className="text-xs text-gray-500">Loading...</div>
+            ) : (
+              displayMealPlans.map(plan => (
+                <label key={plan.value} className="flex items-center gap-2 cursor-pointer">
+                  <div className="relative flex items-center justify-center w-4 h-4">
+                    <input
+                      type="checkbox"
+                      checked={values.mealPlans.includes(plan.value)}
+                      onChange={() => handleToggle('mealPlans', plan.value)}
+                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
+                    />
+                    {values.mealPlans.includes(plan.value) && (
+                      <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
+                    )}
+                  </div>
+                  <span className="text-sm">{plan.label}</span>
+                </label>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Location */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <div className="font-medium mb-3">Asukoht</div>
-          <div className="space-y-2 overflow-y-auto h-[280px] pr-2">
-            {LOCATIONS.map(location => (
-              <label key={location.value} className="flex items-center gap-2 cursor-pointer">
-                <div className="relative flex items-center justify-center w-4 h-4">
-                  <input
-                    type="checkbox"
-                    checked={values.locations.includes(location.value)}
-                    onChange={() => handleToggle('locations', location.value)}
-                    className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                  />
-                  {values.locations.includes(location.value) && (
-                    <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
-                  )}
-                </div>
-                <span className="text-sm">{location.label}</span>
-              </label>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
