@@ -40,5 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 wp-content
-joinup-api/api-example/doc
-old
+joinup-api/*
+old/
