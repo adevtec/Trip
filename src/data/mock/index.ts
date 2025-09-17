@@ -48,3 +48,16 @@ export async function fetchAllPackages(): Promise<TravelPackage[]> {
   await new Promise(resolve => setTimeout(resolve, 100));
   return [];
 }
+
+// Placeholder functions for removed mock data
+export function getMealPlanById(_id: string) {
+  return null;
+}
+
+export function getAreaById(_id: string) {
+  return null;
+}
+
+export function getAreasByRegion(_regionId: string) {
+  return [];
+}

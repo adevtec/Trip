@@ -23,10 +23,12 @@ export default function DepartureCitySelect({ selectedCities, onChangeAction, on
     async function loadCities() {
       try {
         setLoading(true);
+
         const citiesData = await travelData.getCities();
-        setCities(citiesData);
+        setCities(citiesData || []);
       } catch (error) {
         console.error('Failed to load cities:', error);
+        setCities([]);
       } finally {
         setLoading(false);
       }
@@ -84,6 +86,8 @@ export default function DepartureCitySelect({ selectedCities, onChangeAction, on
         <div className="max-h-64 overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center text-gray-500">Loading cities...</div>
+          ) : cities.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">No cities available</div>
           ) : (
             cities
               .filter(city => city.name.toLowerCase().includes(search.toLowerCase()))

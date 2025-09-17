@@ -72,7 +72,8 @@ class TravelDataAPI {
     return cache.getOrSet(
       'travel_cities',
       async () => {
-        const response = await fetch(`${this.baseUrl}/api/travel/data?type=cities`);
+        const url = `${this.baseUrl}/api/travel/data?type=cities`;
+        const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch cities: ${response.statusText}`);

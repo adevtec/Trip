@@ -29,7 +29,7 @@ interface DepartureCalendarProps {
 }
 
 const WEEK_DAYS = ['E', 'T', 'K', 'N', 'R', 'L', 'P'] as const;
-const CURRENT_DATE = new Date(2025, 1, 20); // Current date from metadata
+const CURRENT_DATE = new Date(); // Real current date
 const CURRENT_YEAR = CURRENT_DATE.getFullYear();
 const CURRENT_MONTH = CURRENT_DATE.getMonth();
 

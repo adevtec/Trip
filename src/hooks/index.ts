@@ -6,21 +6,6 @@
 // Universal travel hooks
 export { useTravel, useTravelHealth, usePopularDestinations } from './useTravel';
 
-// NovIT-specific hooks (legacy, use useTravel instead)
-export { 
-  useApi, 
-  useMutation,
-  useNovitDestinations, 
-  useDestinationSearch, 
-  useTravelSearch,
-  useCustomerCountries,
-  useUpdateCustomerCountries,
-  useCustomerPreferences,
-  useApiValidation 
-} from './novit';
-
-// Re-export for backward compatibility
-export * from './novit';
 
 /**
  * Recommended usage:
@@ -58,8 +43,4 @@ export * from './novit';
  * }
  * ```
  * 
- * For existing code using NovIT hooks:
- * ```typescript
- * import { useTravelSearch } from '@/hooks'; // Still works
- * ```
  */
