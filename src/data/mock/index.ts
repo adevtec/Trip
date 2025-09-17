@@ -1,59 +1,50 @@
 /**
  * Mock data index file
- * Exports all mock data from the mock directory
+ * Exports remaining mock data from the mock directory
  */
 
-// Common data
-export * from './common/continents';
+// Common data (only remaining files)
 export * from './common/countries';
 export * from './common/regions';
-export * from './common/areas';
 export * from './common/hotels';
-export * from './common/mealPlans';
-export * from './common/departureCities';
+export * from './common/continents';
 
-// Agency-specific data
-export * from './novatours/packages';
-export * from './teztour/packages';
-
-// Combined data functions
+// Mock functions for compatibility with existing components
 
 import { TravelPackage } from '@/types/destinations';
-import { novatoursPackages } from './novatours/packages';
-import { tezTourPackages } from './teztour/packages';
 
 /**
- * Get all travel packages from all agencies
- * @returns Array of all travel packages
+ * Get all travel packages (placeholder - returns empty array since provider packages removed)
+ * @returns Empty array
  */
 export function getAllPackages(): TravelPackage[] {
-  return [...novatoursPackages, ...tezTourPackages];
+  return [];
 }
 
 /**
  * Get all travel packages for a specific hotel
  * @param hotelId Hotel ID
- * @returns Array of packages for the hotel
+ * @returns Empty array
  */
 export function getAllPackagesByHotel(hotelId: string): TravelPackage[] {
-  return getAllPackages().filter(pkg => pkg.hotelId === hotelId);
+  return [];
 }
 
 /**
  * Get all travel packages from a specific departure city
  * @param departureCity Departure city ID
- * @returns Array of packages from the departure city
+ * @returns Empty array
  */
 export function getAllPackagesByDepartureCity(departureCity: string): TravelPackage[] {
-  return getAllPackages().filter(pkg => pkg.departureCity === departureCity);
+  return [];
 }
 
 /**
  * Mock API function to fetch all packages
- * @returns Promise resolving to all packages array
+ * @returns Promise resolving to empty array
  */
 export async function fetchAllPackages(): Promise<TravelPackage[]> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 100));
-  return getAllPackages();
+  return [];
 }
