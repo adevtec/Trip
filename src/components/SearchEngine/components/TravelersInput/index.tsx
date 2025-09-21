@@ -10,11 +10,11 @@ export interface Traveler {
 }
 
 interface TravelersInputProps {
-  value: Traveler;
-  onChangeAction: (value: Traveler) => void;
+  travelers: Traveler;
+  onTravelersChange: (value: Traveler) => void;
 }
 
-export default function TravelersInput({ value, onChangeAction }: TravelersInputProps) {
+export default function TravelersInput({ travelers, onTravelersChange }: TravelersInputProps) {
   const [isOpen, setIsOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -30,22 +30,22 @@ export default function TravelersInput({ value, onChangeAction }: TravelersInput
   }, []);
 
   const handleAdultsChange = (delta: number) => {
-    const newAdults = Math.max(1, value.adults + delta);
-    onChangeAction({ ...value, adults: newAdults });
+    const newAdults = Math.max(1, travelers.adults + delta);
+    onTravelersChange({ ...travelers, adults: newAdults });
   };
 
   const handleChildrenChange = (delta: number) => {
-    const newChildren = Math.max(0, value.children + delta);
+    const newChildren = Math.max(0, travelers.children + delta);
     const newChildrenAges = delta > 0 
-      ? [...value.childrenAges, 9]
-      : value.childrenAges.slice(0, -1);
-    onChangeAction({ ...value, children: newChildren, childrenAges: newChildrenAges });
+      ? [...travelers.childrenAges, 9]
+      : travelers.childrenAges.slice(0, -1);
+    onTravelersChange({ ...travelers, children: newChildren, childrenAges: newChildrenAges });
   };
 
   const handleChildAgeChange = (index: number, age: number) => {
-    const newChildrenAges = [...value.childrenAges];
+    const newChildrenAges = [...travelers.childrenAges];
     newChildrenAges[index] = age;
-    onChangeAction({ ...value, childrenAges: newChildrenAges });
+    onTravelersChange({ ...travelers, childrenAges: newChildrenAges });
   };
 
   return (
@@ -57,7 +57,7 @@ export default function TravelersInput({ value, onChangeAction }: TravelersInput
       >
         <Users className="w-4 h-4 text-gray-400" />
         <span className="text-gray-700">
-          {value.adults}{value.children > 0 ? ` + ${value.children}` : ''}
+          {travelers.adults}{travelers.children > 0 ? ` + ${travelers.children}` : ''}
         </span>
       </div>
 
@@ -77,11 +77,11 @@ export default function TravelersInput({ value, onChangeAction }: TravelersInput
               <button
                 onClick={() => handleAdultsChange(-1)}
                 className="w-8 h-8 rounded-full bg-orange-50 hover:bg-orange-100 flex items-center justify-center text-orange-500"
-                disabled={value.adults <= 1}
+                disabled={travelers.adults <= 1}
               >
                 -
               </button>
-              <span className="text-lg w-8 text-center">{value.adults}</span>
+              <span className="text-lg w-8 text-center">{travelers.adults}</span>
               <button
                 onClick={() => handleAdultsChange(1)}
                 className="w-8 h-8 rounded-full bg-orange-50 hover:bg-orange-100 flex items-center justify-center text-orange-500"
@@ -101,11 +101,11 @@ export default function TravelersInput({ value, onChangeAction }: TravelersInput
               <button
                 onClick={() => handleChildrenChange(-1)}
                 className="w-8 h-8 rounded-full bg-orange-50 hover:bg-orange-100 flex items-center justify-center text-orange-500"
-                disabled={value.children <= 0}
+                disabled={travelers.children <= 0}
               >
                 -
               </button>
-              <span className="text-lg w-8 text-center">{value.children}</span>
+              <span className="text-lg w-8 text-center">{travelers.children}</span>
               <button
                 onClick={() => handleChildrenChange(1)}
                 className="w-8 h-8 rounded-full bg-orange-50 hover:bg-orange-100 flex items-center justify-center text-orange-500"
@@ -115,9 +115,9 @@ export default function TravelersInput({ value, onChangeAction }: TravelersInput
             </div>
 
             {/* Laste vanused */}
-            {value.children > 0 && (
+            {travelers.children > 0 && (
               <div className="mt-4 space-y-3">
-                {value.childrenAges.map((age, index) => (
+                {travelers.childrenAges.map((age, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="text-sm">
                       {index + 1}. Lapse vanus:

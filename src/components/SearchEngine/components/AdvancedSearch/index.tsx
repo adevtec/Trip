@@ -7,7 +7,8 @@ import {travelData, type TravelMealPlan, type TravelRating, type TravelHotel} fr
 import {type City} from '@/data/regions';
 
 interface AdvancedSearchProps {
-  values: {
+  isOpen: boolean;
+  options: {
     hotelRating: string[];
     hotelNames: string[];
     mealPlans: string[];
@@ -16,14 +17,13 @@ interface AdvancedSearchProps {
     isOpen: boolean;
     [key: string]: string[] | boolean | number | string;
   };
-  onChangeAction: (values: AdvancedSearchProps['values']) => void;
-  selectedCity: City | null;
+  onOptionsChange: (values: AdvancedSearchProps['options']) => void;
 }
 
 
 
 
-export default function AdvancedSearch({ values, onChangeAction, selectedCity }: AdvancedSearchProps) {
+export default function AdvancedSearch({ isOpen, options, onOptionsChange }: AdvancedSearchProps) {
   const { t } = useTranslation();
   const [hotelSearch, setHotelSearch] = useState('');
   const [apiMealPlans, setApiMealPlans] = useState<TravelMealPlan[]>([]);
@@ -69,14 +69,14 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
   }, [hotelSearch]);
 
   const handleToggle = (field: string, value: string) => {
-    const currentValues = values[field];
+    const currentValues = options[field];
     if (!Array.isArray(currentValues)) return;
 
     const newValues = currentValues.includes(value)
       ? currentValues.filter(v => v !== value)
       : [...currentValues, value];
     
-    onChangeAction({ ...values, [field]: newValues });
+    onOptionsChange({ ...options, [field]: newValues });
   };
 
   // Use only API data - no fallback to mock data
@@ -100,12 +100,14 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
 
   const filteredHotels = allHotels.filter(hotel => {
     const matchesSearch = hotel.name.toLowerCase().includes(hotelSearch.toLowerCase());
-    const matchesRegion = !selectedCity || hotel.id === selectedCity.id;
-    const matchesRating = values.hotelRating.length === 0 ||
-      values.hotelRating.some(rating => hotel.rating.includes(rating));
+    // Removed region filter - we don't need it here
+    const matchesRating = options.hotelRating.length === 0 ||
+      options.hotelRating.some(rating => hotel.rating.includes(rating));
 
-    return matchesSearch && matchesRegion && matchesRating;
+    return matchesSearch && matchesRating;
   });
+
+  if (!isOpen) return null;
 
   return (
     <div className="border-t border-gray-200 pt-6">
@@ -126,11 +128,11 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
                       <div className="relative flex items-center justify-center w-4 h-4">
                         <input
                           type="checkbox"
-                          checked={values.hotelRating.includes(rating.value)}
+                          checked={options.hotelRating.includes(rating.value)}
                           onChange={() => handleToggle('hotelRating', rating.value)}
                           className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
                         />
-                        {values.hotelRating.includes(rating.value) && (
+                        {options.hotelRating.includes(rating.value) && (
                           <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
                         )}
                       </div>
@@ -174,11 +176,11 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
                   <div className="relative flex items-center justify-center w-4 h-4">
                     <input
                       type="checkbox"
-                      checked={values.hotelNames.includes(hotel.id)}
+                      checked={options.hotelNames.includes(hotel.id)}
                       onChange={() => handleToggle('hotelNames', hotel.id)}
                       className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
                     />
-                    {values.hotelNames.includes(hotel.id) && (
+                    {options.hotelNames.includes(hotel.id) && (
                       <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
                     )}
                   </div>
@@ -201,11 +203,11 @@ export default function AdvancedSearch({ values, onChangeAction, selectedCity }:
                   <div className="relative flex items-center justify-center w-4 h-4">
                     <input
                       type="checkbox"
-                      checked={values.mealPlans.includes(plan.value)}
+                      checked={options.mealPlans.includes(plan.value)}
                       onChange={() => handleToggle('mealPlans', plan.value)}
                       className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
                     />
-                    {values.mealPlans.includes(plan.value) && (
+                    {options.mealPlans.includes(plan.value) && (
                       <Check className="w-4 h-4 text-green-500 absolute stroke-[3.5]" />
                     )}
                   </div>

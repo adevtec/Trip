@@ -17,17 +17,17 @@ import DepartureCitySelect from './components/DepartureCitySelect';
 import type {DateRange} from 'react-day-picker';
 import DepartureCalendar from '@/components/DepartureCalendar';
 import {type Area, countries, type Country, type Resort} from '@/data/destinations';
-import AreaSelect from './components/AreaSelect';
+import AreaSelect, { getAreaDisplayText } from './components/AreaSelect';
 import NightsInput from './components/NightsInput';
 
 type NightsValue = number | string;
 
 export default function SearchEngine() {
-  const { t } = useTranslation();
+  const {t} = useTranslation();
   const router = useRouter();
 
-  // API data state
-  const [apiCities, setApiCities] = useState<TravelCity[]>([]);
+  // Cities and API state
+  const [departureCities, setDepartureCities] = useState<TravelCity[]>([]);
 
   // Search state
   const [selectedDepartureCities, setSelectedDepartureCities] = useState<string[]>([]);
@@ -57,123 +57,135 @@ export default function SearchEngine() {
   const [isAreaSelectOpen, setIsAreaSelectOpen] = useState(false);
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [showAreaSelectError, setShowAreaSelectError] = useState(false);
+  const [currentRegions, setCurrentRegions] = useState<any[]>([]);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Load cities from API
+  // Formatitud reisijate arv
+  const formattedTravelers = () => {
+    const parts = [];
+    if (travelers.adults > 0) parts.push(`${travelers.adults} täiskasvanu${travelers.adults > 1 ? 't' : ''}`);
+    if (travelers.children > 0) parts.push(`${travelers.children} last${travelers.children > 1 ? 'e' : ''}t`);
+    return parts.join(', ') || '1 täiskasvanu';
+  };
+
+  // Format date range for display
+  const formatDateRange = (range?: DateRange) => {
+    if (!range?.from) return 'Vali kuupäevad';
+
+    if (!range.to) {
+      return format(range.from, 'd. MMMM yyyy', {locale: et});
+    }
+
+    return `${format(range.from, 'd. MMM', {locale: et})} - ${format(range.to, 'd. MMM yyyy', {locale: et})}`;
+  };
+
+  // Format departure cities for display
+  const getDepartureCitiesText = () => {
+    if (selectedDepartureCities.length === 0) {
+      return 'Vali lähtekoht';
+    }
+
+    if (selectedDepartureCities.length === 1) {
+      const city = departureCities.find(c => c.id === selectedDepartureCities[0]);
+      return city ? `${city.name} (${city.country})` : selectedDepartureCities[0];
+    }
+
+    return `${selectedDepartureCities.length} linn${selectedDepartureCities.length > 1 ? 'a' : ''} valitud`;
+  };
+
+  // Load cities on component mount
   useEffect(() => {
     async function loadCities() {
       try {
-        const citiesData = await travelData.getCities();
-        setApiCities(citiesData);
-        // No auto-selection - user must manually select departure city
+        const cities = await travelData.getCities();
+        setDepartureCities(cities || []);
       } catch (error) {
         console.error('Failed to load cities:', error);
       }
     }
-    loadCities();
-  }, []); // Load cities only once on mount
 
-  // Helper function to get city display name
-  const getCityDisplayName = (cityId: string): string => {
-    const apiCity = apiCities.find(city => city.id === cityId);
-    return apiCity?.name || cityId;
-  };
+    loadCities();
+  }, []);
 
   const handleSearch = async () => {
-    // Validate required fields - only departure city is required
+    console.log('🔍 Search initiated');
+    console.log('Selected cities:', selectedDepartureCities);
+    console.log('Selected destination:', selectedCity);
+    console.log('Date range:', dateRange);
+    console.log('Travelers:', travelers);
+    console.log('Advanced options:', advancedOptions);
+
     if (selectedDepartureCities.length === 0) {
-      setSearchError('Palun vali vähemalt üks lähtekoht');
-      setTimeout(() => setSearchError(null), 3000);
+      alert('Palun vali lähtekoht');
       return;
     }
 
-    // Departure date is now optional
+    if (!selectedCity) {
+      alert('Palun vali sihtkoht');
+      return;
+    }
+
+    if (!dateRange?.from) {
+      alert('Palun vali väljumiskuupäev');
+      return;
+    }
+
+    setIsSearching(true);
 
     try {
-      setIsSearching(true);
-      setSearchError(null);
+      const searchParams = {
+        departureCities: selectedDepartureCities,
+        destination: selectedCity.id,
+        startDate: dateRange.from.toISOString().split('T')[0],
+        endDate: dateRange.to?.toISOString().split('T')[0],
+        adults: travelers.adults,
+        children: travelers.children,
+        childrenAges: travelers.childrenAges,
+        nights: typeof advancedOptions.nights === 'string' ? parseInt(advancedOptions.nights) : advancedOptions.nights,
+        mealPlans: advancedOptions.mealPlans,
+        hotelRating: advancedOptions.hotelRating,
+        hotelNames: advancedOptions.hotelNames,
+        areas: selectedAreaIds
+      };
 
-      // Build URL search params for the search results page
-      const params = new URLSearchParams();
+      console.log('Search params:', searchParams);
 
-      // Add basic search parameters
-      selectedDepartureCities.forEach(city => {
-        params.append('departureCities', city);
+      const response = await fetch('/api/travel/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(searchParams)
       });
 
-      if (selectedCity?.country) {
-        params.set('destination', selectedCity.country);
-      }
+      const data = await response.json();
+      console.log('Search results:', data);
 
-      if (selectedAreaIds.length > 0) {
-        selectedAreaIds.forEach(area => {
-          params.append('area', area);
-        });
-      }
+      setSearchResults(data);
 
-      // Add departure date only if selected
-      if (dateRange?.from) {
-        params.set('departureDate', dateRange.from.toISOString());
-      }
+      // Navigate to search results page with params
+      const params = new URLSearchParams({
+        from: selectedDepartureCities.join(','),
+        to: selectedCity.name,
+        date: dateRange.from.toISOString().split('T')[0],
+        adults: travelers.adults.toString(),
+        children: travelers.children.toString()
+      });
 
-      params.set('nights', advancedOptions.nights.toString());
-      params.set('adults', travelers.adults.toString());
-      params.set('children', travelers.children.toString());
-
-      // Add advanced filters
-      if (advancedOptions.hotelRating.length > 0) {
-        advancedOptions.hotelRating.forEach(rating => {
-          params.append('hotelRating', rating);
-        });
-      }
-
-      if (advancedOptions.mealPlans.length > 0) {
-        advancedOptions.mealPlans.forEach(plan => {
-          params.append('mealPlan', plan);
-        });
-      }
-
-      if (advancedOptions.hotelNames.length > 0) {
-        advancedOptions.hotelNames.forEach(name => {
-          params.append('hotelName', name);
-        });
-      }
-
-      // Add sorting parameters
-      params.set('sortBy', 'price');
-      params.set('sortOrder', 'asc');
-
-      // Navigate to search results page
       router.push(`/search?${params.toString()}`);
+
     } catch (error) {
-      console.error('Search error:', error);
-      setSearchError(error instanceof Error ? error.message : 'Otsingul tekkis viga');
+      console.error('Search failed:', error);
+      alert('Otsing ebaõnnestus. Palun proovi uuesti.');
+    } finally {
       setIsSearching(false);
     }
   };
 
-  // Handler for date selection
-  const handleDateSelect = (range: DateRange | undefined) => {
-    setDateRange(range);
-    // Close the picker only if a complete range is selected
-    if (range?.to) {
-      setIsDatePickerOpen(false);
-    }
-  };
-
-  // Format date for display
-  const getDateDisplay = () => {
-    if (!dateRange?.from) return 'Vali väljumiskuupäev';
-    if (!dateRange.to) return format(dateRange.from, 'dd.MM.yyyy', { locale: et });
-    return `${format(dateRange.from, 'dd.MM.yyyy', { locale: et })} - ${format(dateRange.to, 'dd.MM.yyyy', { locale: et })}`;
-  };
-
-  // Handler for opening calendar
   const handleCalendarOpen = () => {
-    if (selectedDepartureCities.length === 0) {
+    if (selectedDepartureCities.length === 0 || !selectedCity) {
       setShowCalendarError(true);
       setTimeout(() => setShowCalendarError(false), 3000);
       return;
@@ -190,13 +202,31 @@ export default function SearchEngine() {
     setIsAreaSelectOpen(true);
   };
 
-  const handleDestinationSelect = (city: City | null) => {
+  const handleDestinationSelect = async (city: City | null) => {
+    console.log('🎯 FIXED handleDestinationSelect called with:', city);
+    console.log('🎯 FIXED handleDestinationSelect function triggered!');
     const country = city ? (countries.find(c => c.id === city.country) || null) : null;
     setSelectedCity(city);
     setSelectedCountry(country);
     setSelectedArea(null);
     setSelectedResort(null);
     setIsDestinationOpen(false);
+    console.log('✅ FIXED selectedCity set to:', city);
+    console.log('✅ FIXED State will update - forcing render');
+
+    if (city) {
+      // Load regions for this destination
+      try {
+        const regionsData = await travelData.getRegions(undefined, city.id);
+        setCurrentRegions(regionsData || []);
+      } catch (error) {
+        console.error('Failed to load regions for destination:', error);
+        setCurrentRegions([]);
+      }
+    } else {
+      setCurrentRegions([]);
+      setSelectedAreaIds([]);
+    }
   };
 
   return (
@@ -209,27 +239,25 @@ export default function SearchEngine() {
             onClick={() => setAdvancedOptions({ ...advancedOptions, isOpen: !advancedOptions.isOpen })}
             className="text-gray-600 hover:text-gray-800 font-medium"
           >
-            {advancedOptions.isOpen ? 'Vähem' : 'Rohkem'}
+            Rohkem
           </button>
         </div>
 
-        {/* Ülemised read */}
+        {/* Põhilised valikud */}
         <div className="space-y-8">
-          {/* First Row */}
+          {/* Esimene rida */}
           <div className="grid grid-cols-3 gap-4">
-            {/* Departure Cities */}
+            {/* Departure City */}
             <div>
               <div className="text-sm text-gray-500 mb-1">Lähtekoht</div>
               <div className="relative">
                 <button
-                  onClick={() => setIsDepartureCityOpen(true)}
                   className="w-full h-12 px-3 text-left bg-gray-50 rounded flex items-center gap-2"
+                  onClick={() => setIsDepartureCityOpen(!isDepartureCityOpen)}
                 >
                   <Building className="w-4 h-4 text-gray-400" />
                   <div className="flex-1 truncate">
-                    {selectedDepartureCities.length > 0
-                      ? selectedDepartureCities.map(getCityDisplayName).join(', ')
-                      : 'Vali lähtekoht'}
+                    {getDepartureCitiesText()}
                   </div>
                 </button>
                 {isDepartureCityOpen && (
@@ -272,13 +300,14 @@ export default function SearchEngine() {
               <div className="relative">
                 <button
                   className="w-full h-12 px-3 text-left bg-gray-50 rounded flex items-center gap-2"
-                  onClick={handleAreaSelectOpen}
+                  onClick={() => {
+                    console.log('🔥 Area button clicked! selectedCity:', selectedCity);
+                    handleAreaSelectOpen();
+                  }}
                 >
                   <MapPin className="w-4 h-4 text-gray-400" />
                   <span className="flex-1 truncate text-gray-700">
-                    {selectedAreaIds.length > 0
-                      ? `Piirkond(${selectedAreaIds.length})`
-                      : 'Vali piirkond'}
+                    {getAreaDisplayText(selectedAreaIds, currentRegions)}
                   </span>
                 </button>
 
@@ -296,27 +325,28 @@ export default function SearchEngine() {
                   <AreaSelect
                     selectedAreas={selectedAreaIds}
                     onSelectAction={setSelectedAreaIds}
-                    countryId={selectedCity.country}
+                    destinationId={selectedCity.id}
                     onCloseAction={() => setIsAreaSelectOpen(false)}
                   />
                 )}
+
               </div>
             </div>
           </div>
 
-          {/* Second Row */}
+          {/* Teine rida */}
           <div className="grid grid-cols-3 gap-4">
-            {/* Date Range */}
+            {/* Date Picker */}
             <div>
               <div className="text-sm text-gray-500 mb-1">Väljumine</div>
               <div className="relative">
                 <button
-                  onClick={handleCalendarOpen}
                   className="w-full h-12 px-3 text-left bg-gray-50 rounded flex items-center gap-2"
+                  onClick={handleCalendarOpen}
                 >
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span className="flex-1 truncate text-gray-700">
-                    {dateRange?.from ? format(dateRange.from, 'dd.MM.yyyy', { locale: et }) : 'Vali väljumiskuupäev'}
+                    {formatDateRange(dateRange)}
                   </span>
                 </button>
 
@@ -324,32 +354,23 @@ export default function SearchEngine() {
                 {showCalendarError && (
                   <div className="absolute top-full left-0 mt-2 p-2 bg-gray-50 border border-gray-100 rounded-md shadow-sm z-10">
                     <div className="flex items-center gap-2 text-gray-600 text-sm">
-                      <span>Vali esmalt lähtekoht kalendri avamiseks</span>
+                      <span>Vali esmalt lähtekoht ja sihtkoht</span>
                     </div>
                   </div>
                 )}
 
-                {/* Calendar Modal */}
-                {isCalendarOpen && selectedDepartureCities.length > 0 && (
-                  <DepartureCalendar
-                    departureCities={selectedDepartureCities
-                      .map(id => {
-                        const apiCity = apiCities.find(city => city.id === id);
-                        return apiCity ? {
-                          id: apiCity.id,
-                          name: apiCity.name,
-                          code: apiCity.code,
-                          country: apiCity.country
-                        } : null;
-                      })
-                      .filter((city): city is DepartureCity => city !== null)}
-                    isOpen={isCalendarOpen}
-                    onClose={() => setIsCalendarOpen(false)}
-                    onDateSelect={(date) => {
-                      setDateRange({ from: date, to: undefined });
-                      setIsCalendarOpen(false);
-                    }}
-                  />
+                {isCalendarOpen && (
+                  <div className="absolute top-full left-0 mt-1 z-50">
+                    <DepartureCalendar
+                      departureCities={[]}
+                      isOpen={isCalendarOpen}
+                      onClose={() => setIsCalendarOpen(false)}
+                      onDateSelect={(date: Date) => {
+                        setDateRange({ from: date, to: date });
+                        setIsCalendarOpen(false);
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -357,118 +378,36 @@ export default function SearchEngine() {
             {/* Travelers */}
             <div>
               <div className="text-sm text-gray-500 mb-1">Reisijad</div>
-              <TravelersInput
-                value={travelers}
-                onChangeAction={setTravelers}
-              />
+              <div className="relative">
+                <TravelersInput
+                  travelers={travelers}
+                  onTravelersChange={setTravelers}
+                />
+              </div>
             </div>
 
             {/* Nights */}
             <div>
               <div className="text-sm text-gray-500 mb-1">Ööde arv</div>
-              <NightsInput
-                value={advancedOptions.nights}
-                onChangeAction={(nights) => setAdvancedOptions({ ...advancedOptions, nights })}
-                availableNights={selectedDepartureCities.length > 0 && dateRange?.from ? [7, 10, 14] : undefined}
-              />
+              <div className="relative">
+                <NightsInput
+                  value={advancedOptions.nights}
+                  onChangeAction={(nights: number | string) => setAdvancedOptions({ ...advancedOptions, nights })}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Advanced Search section */}
-        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-          advancedOptions.isOpen ? 'max-h-[800px] mt-8' : 'max-h-0'
-        }`}>
-          <div className="border-t border-gray-200 pt-6">
-            <div className="grid grid-cols-3 gap-6 h-[360px]">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="font-medium mb-3">Hotelli reiting</div>
-                <div className="space-y-4 overflow-y-auto h-[280px] pr-2">
-                  <div>
-                    <div className="text-sm text-gray-600 mb-2">Tärnid</div>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center w-4 h-4">
-                          <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                        </div>
-                        <div className="flex gap-1 text-orange-400">★★★</div>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center w-4 h-4">
-                          <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                        </div>
-                        <div className="flex gap-1 text-orange-400">★★★★</div>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <div className="relative flex items-center justify-center w-4 h-4">
-                          <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                        </div>
-                        <div className="flex gap-1 text-orange-400">★★★★★</div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="font-medium mb-3">Hotell</div>
-                <div className="relative mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400">
-                    <path d="m21 21-4.34-4.34"></path>
-                    <circle cx="11" cy="11" r="8"></circle>
-                  </svg>
-                  <input type="text" placeholder="Search hotel" className="w-full pl-9 pr-3 py-2 border rounded focus:outline-none focus:ring-1 focus:ring-orange-500" />
-                </div>
-                <div className="space-y-2 overflow-y-auto h-[280px] pr-2">
-                  <div className="text-sm text-gray-500 text-center py-4">No hotels found matching the selected filters</div>
-                </div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="font-medium mb-3">Toitlustus</div>
-                <div className="space-y-2 overflow-y-auto h-[280px] pr-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">UAI - UAI - Ultra kõik hinnas</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">AI - AI - Kõik hinnas</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">FB - FB - Hommiku-, lõuna- ja õhtusöök</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">HB - HB - Hommiku- ja õhtusöök</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">BB - BB - Hommikusöök</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white" type="checkbox" />
-                    </div>
-                    <span className="text-sm">RO - RO - Toitlustuseta</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Advanced Search Options */}
+        <AdvancedSearch
+          isOpen={advancedOptions.isOpen}
+          options={advancedOptions}
+          onOptionsChange={setAdvancedOptions}
+        />
       </div>
 
-      {/* Otsingu nupp eraldi sektsioonis */}
+      {/* Search Button */}
       <div className="py-8">
         <div className="flex flex-col items-center">
           <button
@@ -482,20 +421,6 @@ export default function SearchEngine() {
           >
             {isSearching ? 'Otsin...' : 'Otsi reisi'}
           </button>
-
-          {/* Error message */}
-          {searchError && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-100 text-red-600 rounded-md">
-              {searchError}
-            </div>
-          )}
-
-          {/* Results summary */}
-          {searchResults && !searchError && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-100 text-green-600 rounded-md">
-              Leitud {searchResults.totalResults} reisi. Vaata tulemusi allpool.
-            </div>
-          )}
         </div>
       </div>
     </div>

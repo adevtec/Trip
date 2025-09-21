@@ -305,6 +305,94 @@ export async function fetchCheckinDates(cityId: string, destinationId?: string):
 }
 
 /**
+ * Fetch regions/towns for a specific destination
+ */
+export async function fetchRegions(destinationId: string, departureCityId?: string): Promise<{ success: boolean; regions?: any[]; error?: string }> {
+  try {
+    if (!destinationId) {
+      return {
+        success: false,
+        error: 'destinationId parameter is required'
+      };
+    }
+
+    const credentials = getJoinUpCredentials();
+
+    if (!credentials.oauth_token) {
+      return {
+        success: false,
+        error: 'Missing JoinUp OAuth token'
+      };
+    }
+
+    // Default to Tallinn (city ID 2552) if no departure city specified
+    const townFromId = departureCityId || '2552';
+
+    // Fetch regions/towns from JoinUp API with both TOWNFROMINC and STATEINC
+    const apiUrl = `${JOINUP_API_BASE_URL}&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_TOWNS&TOWNFROMINC=${townFromId}&STATEINC=${destinationId}`;
+
+    console.log('🏖️ JoinUp Regions API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'EksootikareisidApp/1.0',
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`JoinUp API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    console.log('🏖️ JoinUp SearchTour_TOWNS Response:', JSON.stringify(data, null, 2));
+
+    // Debug: Log a single region to see its structure
+    if (data.SearchTour_TOWNS && Object.keys(data.SearchTour_TOWNS).length > 0) {
+      const firstRegion = Object.values(data.SearchTour_TOWNS)[0];
+      console.log('🔍 First region structure:', JSON.stringify(firstRegion, null, 2));
+    }
+
+    if (data.SearchTour_TOWNS) {
+      const regions = Object.values(data.SearchTour_TOWNS).map((region: any) => ({
+        id: region.id?.toString() || region.townKey?.toString(),
+        name: region.name || region.town || 'Unknown',
+        nameAlt: region.nameAlt || region.name || 'Unknown',
+        provider: 'joinup',
+        destinationId: destinationId,
+        joinupId: region.id || region.townKey,
+        // Include JoinUp hierarchy fields (only if they exist)
+        ...(region.region && { region: region.region }),
+        ...(region.regionAlt && { regionAlt: region.regionAlt }),
+        ...(region.regionKey && { regionKey: region.regionKey })
+      }));
+
+      // API now returns correct regions with proper TOWNFROMINC + STATEINC parameters
+
+      return {
+        success: true,
+        regions
+      };
+    } else {
+      console.log('❌ No SearchTour_TOWNS in response:', Object.keys(data));
+      return {
+        success: true,
+        regions: []
+      };
+    }
+
+  } catch (error) {
+    console.error('JoinUp regions API error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch regions'
+    };
+  }
+}
+
+/**
  * Search for travel offers using SearchTour_PRICES endpoint
  */
 export async function searchOffers(searchParams: any): Promise<{ success: boolean; offers?: JoinUpOffer[]; error?: string }> {

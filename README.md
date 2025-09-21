@@ -128,7 +128,7 @@ GET /api/travel/data        # Reference data
 
 Provider-specific:
 GET /api/providers/joinup/  # JoinUp API proxy
-GET /api/providers/novit/   # NovIT integration
+GET /api/providers//   # integration
 ```
 
 ### Andmevoog
@@ -136,8 +136,8 @@ GET /api/providers/novit/   # NovIT integration
 ```
 Klient → SearchEngine → Unified API → [
   JoinUp Provider
-  NovIT Provider  
-  TEZ Provider
+  Provider  
+  Provider
 ] → Kombineeritud tulemused → Klient
 ```
 
@@ -145,19 +145,6 @@ Klient → SearchEngine → Unified API → [
 
 ## 🛠️ API Integratsioonid
 
-### ✅ NovIT Provider
-**Status:** Töötav  
-**Allikas:** WordPress cache from eksootikareisid-old  
-```typescript
-// Kasutamine
-const { search, loading, results } = useTravel();
-await search({
-  departureCities: ['tallinn'],
-  destination: 'turkey',
-  adults: 2,
-  nights: 7
-});
-```
 
 ### 🚧 JoinUp Provider
 **Status:** Dev (mock data), Production (vajalik OAuth)  
@@ -174,10 +161,6 @@ curl "http://localhost:3000/api/joinup/cities"
 ```
 
 **📋 Detailne dok:** [`joinup-api/api-example/README.md`](./joinup-api/api-example/README.md)
-
-### 📋 TEZ Tour Provider
-**Status:** Template, vajab API võtmeid  
-**API:** xml.tezapi.eu  
 
 ### Uue provideri lisamine
 
@@ -409,9 +392,7 @@ npm run dev
 - [`joinup-api/api-example/examples.md`](./joinup-api/api-example/examples.md) - Kasutamise näited
 
 ### 🛠️ Provider-spetsiifilised
-- [`src/app/api/providers/novit/README.md`](./src/app/api/providers/novit/README.md) - NovIT provider
 - [`src/app/api/providers/joinup/README.md`](./src/app/api/providers/joinup/README.md) - JoinUp provider  
-- [`src/app/api/providers/tez-tour/README.md`](./src/app/api/providers/tez-tour/README.md) - TEZ Tour provider
 
 ---
 
@@ -439,7 +420,7 @@ npx tsc --noEmit
 ## ✨ Järgmised sammud
 
 1. **JoinUp OAuth tokeni saamine** - kontakti JoinUp'iga
-2. **TEZ Tour API integratsiooni lõpetamine**
+2. 
 3. **Cache kihi lisamine** (Redis)
 4. **Testide kirjutamine**
 5. **Monitoring ja analytics**

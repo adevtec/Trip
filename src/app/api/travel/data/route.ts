@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchCities, fetchDestinations } from '@/app/api/providers/joinup/api';
+import { fetchCities, fetchDestinations, fetchRegions } from '@/app/api/providers/joinup/api';
 
 /**
  * GET /api/travel/data?type=cities|destinations|regions|hotels|meals|ratings
@@ -75,7 +75,6 @@ async function getCities() {
     }
 
 
-    // Add other providers' cities here when they become available
 
     // Remove duplicates and sort
     const uniqueCities = Array.from(
@@ -132,8 +131,6 @@ async function getDestinations(cityId: string | null) {
       console.warn('Failed to fetch JoinUp destinations:', error);
     }
 
-    // Add other providers' destinations here
-    // Add NovIT, TEZ, etc.
 
     const uniqueDestinations = Array.from(
       new Map(destinations.map(dest => [dest.name.toLowerCase(), dest])).values()
@@ -165,21 +162,61 @@ async function getDestinations(cityId: string | null) {
  * Get regions/areas for a destination
  */
 async function getRegions(cityId: string | null, destinationId: string | null) {
-  // TODO: Implement JoinUp towns endpoint when available
-  const regions: any[] = [];
+  if (!destinationId) {
+    return NextResponse.json({
+      success: false,
+      error: 'destinationId parameter is required for regions'
+    }, { status: 400 });
+  }
 
-  return NextResponse.json({
-    success: true,
-    regions: regions,
-    totalRegions: regions.length,
-    fromCityId: cityId,
-    destinationId: destinationId,
-    cacheInfo: {
-      maxAge: 6 * 60 * 60, // 6 hours
-      cacheKey: `travel_regions_${cityId}_${destinationId}`,
-      timestamp: Date.now()
+  try {
+    const regions = [];
+
+    // Add JoinUp regions
+    try {
+      const joinUpRegionsResult = await fetchRegions(destinationId, cityId || undefined);
+      const joinUpRegions = joinUpRegionsResult.success ? (joinUpRegionsResult.regions || []) : [];
+      regions.push(...joinUpRegions.map(region => ({
+        id: region.id,
+        name: region.name,
+        nameAlt: region.nameAlt,
+        provider: 'joinup',
+        destinationId: region.destinationId,
+        // Preserve JoinUp hierarchy fields for hierarchical grouping
+        ...(region.region && { region: region.region }),
+        ...(region.regionAlt && { regionAlt: region.regionAlt }),
+        ...(region.regionKey && { regionKey: region.regionKey })
+      })));
+    } catch (error) {
+      console.warn('Failed to fetch JoinUp regions:', error);
     }
-  });
+
+
+    const uniqueRegions = Array.from(
+      new Map(regions.map(region => [region.name.toLowerCase(), region])).values()
+    ).sort((a, b) => a.name.localeCompare(b.name, 'et'));
+
+    return NextResponse.json({
+      success: true,
+      regions: uniqueRegions,
+      totalRegions: uniqueRegions.length,
+      fromCityId: cityId,
+      destinationId: destinationId,
+      providers: [...new Set(regions.map(r => r.provider))],
+      cacheInfo: {
+        maxAge: 6 * 60 * 60, // 6 hours
+        cacheKey: `travel_regions_${cityId}_${destinationId}`,
+        timestamp: Date.now()
+      }
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=21600, stale-while-revalidate=1800'
+      }
+    });
+
+  } catch (error) {
+    throw new Error(`Failed to fetch regions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 /**
@@ -280,8 +317,6 @@ async function getCheckinDates(cityId: string | null, destinationId: string | nu
       console.warn('Failed to fetch JoinUp checkin dates:', error);
     }
 
-    // Add other providers' checkin dates here
-    // Add NovIT, TEZ, etc.
 
 
     return NextResponse.json({

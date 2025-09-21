@@ -1,24 +1,148 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, Check, ChevronDown, ChevronUp, ChevronRight } from 'lucide-react';
-import { type Area, type Resort, areas, resorts, countries } from '@/data/destinations';
+import { Search, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { travelData } from '@/lib/travel-data';
 
 export interface AreaSelectProps {
   selectedAreas: string[];
   onSelectAction: (areas: string[]) => void;
-  countryId: string;
+  destinationId: string;
   onCloseAction: () => void;
 }
 
-export default function AreaSelect({ selectedAreas, onSelectAction, countryId, onCloseAction }: AreaSelectProps) {
+// Helper function to generate display text for selected areas
+export function getAreaDisplayText(selectedAreaIds: string[], allRegions: any[]): string {
+  if (selectedAreaIds.length === 0) {
+    return 'Vali piirkond';
+  }
+
+  const groupRegions = (regions: any[]): RegionGroup[] => {
+    const groups: { [key: string]: RegionGroup } = {};
+
+    regions.forEach(region => {
+      // PRIORITY 1: Use JoinUp's region field (most accurate)
+      let groupName = region.region || region.name;
+
+      // FALLBACK: Smart text parsing for non-JoinUp providers
+      if (!region.region) {
+        // Pattern 1: "Parent - Child" format (e.g., "Chania - Agia Marina")
+        if (region.name.includes(' - ')) {
+          const parts = region.name.split(' - ');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+        // Pattern 2: "Parent / Child" format (e.g., "Sharm El Sheikh / Naama Bay")
+        else if (region.name.includes(' / ')) {
+          const parts = region.name.split(' / ');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+        // Pattern 3: "Parent/Child" format (e.g., "Alexandria/Montazah")
+        else if (region.name.includes('/')) {
+          const parts = region.name.split('/');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+      }
+
+      if (!groups[groupName]) {
+        groups[groupName] = {
+          name: groupName,
+          cities: []
+        };
+      }
+
+      groups[groupName].cities.push({
+        id: region.id,
+        name: region.name,
+        nameAlt: region.nameAlt
+      });
+    });
+
+    return Object.values(groups);
+  };
+
+  const regionGroups = groupRegions(allRegions);
+  const selectedRegions: { name: string; count: number; total: number }[] = [];
+
+  regionGroups.forEach(group => {
+    const selectedCitiesInGroup = group.cities.filter(city => selectedAreaIds.includes(city.id));
+
+    if (selectedCitiesInGroup.length > 0) {
+      selectedRegions.push({
+        name: group.name,
+        count: selectedCitiesInGroup.length,
+        total: group.cities.length
+      });
+    }
+  });
+
+  if (selectedRegions.length === 1) {
+    const region = selectedRegions[0];
+    if (region.count === region.total) {
+      return `${region.name} (kõik)`;
+    } else {
+      return `${region.name} (${region.count})`;
+    }
+  } else if (selectedRegions.length > 1) {
+    return `${selectedRegions.length} piirkonda`;
+  }
+
+  return `Piirkond (${selectedAreaIds.length})`;
+}
+
+interface RegionGroup {
+  name: string;
+  cities: Array<{
+    id: string;
+    name: string;
+    nameAlt: string;
+  }>;
+}
+
+export default function AreaSelect({ selectedAreas, onSelectAction, destinationId, onCloseAction }: AreaSelectProps) {
   const [search, setSearch] = useState('');
-  const [expandedAreas, setExpandedAreas] = useState<string[]>(
-    areas.filter(area => area.countryId === countryId).map(area => area.id)
-  );
+  const [regions, setRegions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set());
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Lisa click-outside handler
+  // Load regions from API
+  useEffect(() => {
+    console.log('🔥 AreaSelect useEffect triggered! destinationId:', destinationId);
+
+    async function loadRegions() {
+      if (!destinationId) {
+        console.log('❌ AreaSelect No destinationId, skipping load');
+        setRegions([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        console.log('🏖️ AreaSelect Loading regions for destinationId:', destinationId);
+
+        const regionsData = await travelData.getRegions(undefined, destinationId);
+        console.log('✅ AreaSelect Got regions count:', regionsData?.length);
+
+        setRegions(regionsData || []);
+      } catch (error) {
+        console.error('❌ AreaSelect Failed to load regions:', error);
+        setRegions([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRegions();
+  }, [destinationId]);
+
+  // Click-outside handler
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
@@ -30,59 +154,153 @@ export default function AreaSelect({ selectedAreas, onSelectAction, countryId, o
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onCloseAction]);
 
-  // Get areas for selected country
-  const countryAreas = areas.filter(area => area.countryId === countryId);
+  // Group regions hierarchically using JoinUp region data
+  const groupRegions = (regions: any[]): RegionGroup[] => {
+    const groups: { [key: string]: RegionGroup } = {};
 
-  // Filter based on search
-  const filteredAreas = countryAreas.filter(area => {
-    const areaMatches = area.name.toLowerCase().includes(search.toLowerCase());
-    const subAreaMatches = area.subAreas?.some(subArea => 
-      subArea.name.toLowerCase().includes(search.toLowerCase())
-    );
-    return areaMatches || subAreaMatches;
-  }).map(area => ({
-    ...area,
-    name: area.name.replace(countries.find(c => c.id === area.countryId)?.name || '', '').trim()
-  }));
+    regions.forEach(region => {
+      // PRIORITY 1: Use JoinUp's region field (most accurate)
+      let groupName = region.region || region.name;
 
-  const handleSelect = (id: string, area?: Area) => {
+      // FALLBACK: Smart text parsing for non-JoinUp providers
+      if (!region.region) {
+        // Pattern 1: "Parent - Child" format (e.g., "Chania - Agia Marina")
+        if (region.name.includes(' - ')) {
+          const parts = region.name.split(' - ');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+        // Pattern 2: "Parent / Child" format (e.g., "Sharm El Sheikh / Naama Bay")
+        else if (region.name.includes(' / ')) {
+          const parts = region.name.split(' / ');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+        // Pattern 3: "Parent/Child" format (e.g., "Alexandria/Montazah")
+        else if (region.name.includes('/')) {
+          const parts = region.name.split('/');
+          if (parts.length >= 2) {
+            groupName = parts[0].trim();
+          }
+        }
+      }
+
+      if (!groups[groupName]) {
+        groups[groupName] = {
+          name: groupName,
+          cities: []
+        };
+      }
+
+      groups[groupName].cities.push({
+        id: region.id,
+        name: region.name,
+        nameAlt: region.nameAlt
+      });
+    });
+
+    return Object.values(groups).sort((a, b) => a.name.localeCompare(b.name, 'et'));
+  };
+
+  const regionGroups = groupRegions(regions);
+
+  // Filter groups based on search
+  const filteredGroups = search
+    ? regionGroups.filter(group =>
+        group.name.toLowerCase().includes(search.toLowerCase()) ||
+        group.cities.some(city =>
+          city.name.toLowerCase().includes(search.toLowerCase()) ||
+          city.nameAlt.toLowerCase().includes(search.toLowerCase())
+        )
+      ).map(group => ({
+        ...group,
+        cities: group.cities.filter(city =>
+          city.name.toLowerCase().includes(search.toLowerCase()) ||
+          city.nameAlt.toLowerCase().includes(search.toLowerCase())
+        )
+      }))
+    : regionGroups;
+
+  const handleCitySelect = (cityId: string) => {
     let newSelectedAreas: string[];
-    
-    if (area) {
-      // Kui valitakse peapiirkond
-      const subAreaIds = area.subAreas?.map(sa => sa.id) || [];
-      if (selectedAreas.includes(id)) {
-        // Eemalda peapiirkond ja kõik alampiirkonnad
-        newSelectedAreas = selectedAreas.filter(areaId => 
-          areaId !== id && !subAreaIds.includes(areaId)
-        );
-      } else {
-        // Lisa peapiirkond ja kõik alampiirkonnad
-        newSelectedAreas = [...selectedAreas, id, ...subAreaIds];
-      }
+
+    if (selectedAreas.includes(cityId)) {
+      newSelectedAreas = selectedAreas.filter(areaId => areaId !== cityId);
     } else {
-      // Üksiku alampiirkonna valimine/eemaldamine
-      if (selectedAreas.includes(id)) {
-        // Eemalda alampiirkond ja vajadusel ka peapiirkond
-        const parentArea = areas.find(area => 
-          area.subAreas?.some(sa => sa.id === id)
-        );
-        newSelectedAreas = selectedAreas.filter(areaId => 
-          areaId !== id && areaId !== parentArea?.id
-        );
-      } else {
-        newSelectedAreas = [...selectedAreas, id];
-      }
+      newSelectedAreas = [...selectedAreas, cityId];
     }
-    
+
     onSelectAction(newSelectedAreas);
   };
 
-  const toggleExpand = (areaId: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setExpandedAreas(prev => 
-      prev.includes(areaId) ? prev.filter(id => id !== areaId) : [...prev, areaId]
-    );
+  const handleRegionSelect = (regionName: string) => {
+    const group = regionGroups.find(g => g.name === regionName);
+    if (!group) return;
+
+    const allCityIds = group.cities.map(city => city.id);
+    const allSelected = allCityIds.every(cityId => selectedAreas.includes(cityId));
+
+    let newSelectedAreas: string[];
+    if (allSelected) {
+      // Deselect all cities in this region
+      newSelectedAreas = selectedAreas.filter(areaId => !allCityIds.includes(areaId));
+    } else {
+      // Select all cities in this region
+      const alreadySelected = selectedAreas.filter(areaId => !allCityIds.includes(areaId));
+      newSelectedAreas = [...alreadySelected, ...allCityIds];
+    }
+
+    onSelectAction(newSelectedAreas);
+  };
+
+  const toggleRegionExpansion = (regionName: string) => {
+    const newExpanded = new Set(expandedRegions);
+    if (newExpanded.has(regionName)) {
+      newExpanded.delete(regionName);
+    } else {
+      newExpanded.add(regionName);
+    }
+    setExpandedRegions(newExpanded);
+  };
+
+  const getRegionSelectionStatus = (group: RegionGroup) => {
+    const allCityIds = group.cities.map(city => city.id);
+    const selectedCount = allCityIds.filter(cityId => selectedAreas.includes(cityId)).length;
+
+    if (selectedCount === 0) return 'none';
+    if (selectedCount === allCityIds.length) return 'all';
+    return 'partial';
+  };
+
+  // Get clean city name without region prefix
+  const getCleanCityName = (cityName: string, regionName: string) => {
+    // Remove region prefix from city name for display in expanded view
+    // "Sharm El Sheikh / Coral Bay" → "Coral Bay"
+    if (cityName.includes(' / ')) {
+      const parts = cityName.split(' / ');
+      if (parts.length >= 2 && parts[0].trim() === regionName) {
+        return parts.slice(1).join(' / ').trim();
+      }
+    }
+    // "Sharm El Sheikh/Coral Bay" → "Coral Bay"
+    else if (cityName.includes('/')) {
+      const parts = cityName.split('/');
+      if (parts.length >= 2 && parts[0].trim() === regionName) {
+        return parts.slice(1).join('/').trim();
+      }
+    }
+    // "Sharm El Sheikh - Coral Bay" → "Coral Bay"
+    else if (cityName.includes(' - ')) {
+      const parts = cityName.split(' - ');
+      if (parts.length >= 2 && parts[0].trim() === regionName) {
+        return parts.slice(1).join(' - ').trim();
+      }
+    }
+
+    // If no prefix matches or no separator found, return original name
+    return cityName;
   };
 
   return (
@@ -105,65 +323,86 @@ export default function AreaSelect({ selectedAreas, onSelectAction, countryId, o
       </div>
 
       <div className="max-h-64 overflow-y-auto p-2">
-        {filteredAreas.map(area => (
-          <div key={area.id}>
-            <div className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3 flex-1">
-                <div 
-                  className="flex items-center gap-3"
-                  onClick={() => handleSelect(area.id, area)}
-                >
-                  <div className="relative flex items-center justify-center w-4 h-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedAreas.includes(area.id)}
-                      onChange={() => handleSelect(area.id, area)}
-                      className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                    />
-                    {selectedAreas.includes(area.id) && (
-                      <Check className="absolute w-3 h-3 text-green-500 stroke-[3.5]" />
-                    )}
-                  </div>
-                  <span className="text-sm font-medium">{area.name}</span>
-                </div>
-              </div>
-              <button
-                onClick={(e) => toggleExpand(area.id, e)}
-                className="p-1 hover:bg-gray-100 rounded-full"
-              >
-                {expandedAreas.includes(area.id) 
-                  ? <ChevronDown className="w-4 h-4 text-gray-400" />
-                  : <ChevronRight className="w-4 h-4 text-gray-400" />
-                }
-              </button>
-            </div>
-
-            {expandedAreas.includes(area.id) && area.subAreas && (
-              <div className="ml-8 space-y-1 mt-1 border-l-2 border-gray-100 pl-4">
-                {area.subAreas.map(subArea => (
-                  <div
-                    key={subArea.id}
-                    className="flex items-center gap-3 p-2 cursor-pointer hover:bg-gray-50 rounded-lg"
-                    onClick={() => handleSelect(subArea.id)}
-                  >
-                    <div className="relative flex items-center justify-center w-4 h-4">
-                      <input
-                        type="checkbox"
-                        checked={selectedAreas.includes(subArea.id)}
-                        onChange={() => handleSelect(subArea.id)}
-                        className="appearance-none w-4 h-4 border-2 border-gray-300 rounded-full checked:border-green-500 checked:bg-white"
-                      />
-                      {selectedAreas.includes(subArea.id) && (
-                        <Check className="absolute w-3 h-3 text-green-500 stroke-[3.5]" />
-                      )}
-                    </div>
-                    <span className="text-sm">{subArea.name}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+        {loading ? (
+          <div className="p-4 text-center text-gray-500">Loading regions...</div>
+        ) : filteredGroups.length === 0 ? (
+          <div className="p-4 text-center text-gray-500">
+            {!destinationId ? 'Vali esmalt sihtkoht' : 'Ühtegi piirkonda ei leitud'}
           </div>
-        ))}
+        ) : (
+          filteredGroups.map(group => {
+            const selectionStatus = getRegionSelectionStatus(group);
+            const isExpanded = expandedRegions.has(group.name);
+            const hasMultipleCities = group.cities.length > 1;
+
+            return (
+              <div key={group.name} className="mb-1">
+                {/* Region header */}
+                <div className="flex items-center">
+                  <button
+                    onClick={() => handleRegionSelect(group.name)}
+                    className={`flex-1 px-3 py-2 text-left hover:bg-orange-50 flex items-center gap-2 ${
+                      selectionStatus !== 'none' ? 'text-gray-900' : 'text-gray-700'
+                    }`}
+                  >
+                    <div className="w-4 h-4 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                    </div>
+                    <span className="font-medium">{group.name}</span>
+                    {selectionStatus === 'all' && <Check className="w-4 h-4 ml-auto text-green-500" />}
+                    {selectionStatus === 'partial' && (
+                      <div className="w-4 h-4 ml-auto bg-orange-500 rounded-sm flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-sm"></div>
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Expand/collapse button */}
+                  {hasMultipleCities && (
+                    <button
+                      onClick={() => toggleRegionExpansion(group.name)}
+                      className="px-2 py-2 hover:bg-gray-100 rounded"
+                    >
+                      {isExpanded ? (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4 text-gray-500" />
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {/* Cities list */}
+                {hasMultipleCities && isExpanded && (
+                  <div className="ml-6 border-l border-gray-200 pl-2">
+                    {group.cities.map(city => (
+                      <button
+                        key={city.id}
+                        onClick={() => handleCitySelect(city.id)}
+                        className={`w-full px-3 py-1.5 text-left hover:bg-orange-50 flex items-center gap-2 text-sm ${
+                          selectedAreas.includes(city.id) ? 'text-gray-900' : 'text-gray-600'
+                        }`}
+                      >
+                        <div className="w-3 h-3 text-gray-400">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                        <span>{getCleanCityName(city.name, group.name)}</span>
+                        {selectedAreas.includes(city.id) && (
+                          <Check className="w-3 h-3 ml-auto text-green-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );
