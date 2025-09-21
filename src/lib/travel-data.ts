@@ -25,7 +25,9 @@ export interface TravelDestination {
 export interface TravelRegion {
   id: string;
   name: string;
+  nameAlt?: string; // Alternative name (for localization)
   provider: string;
+  region?: string; // Optional parent region for hierarchical grouping (e.g., JoinUp)
 }
 
 export interface TravelHotel {
@@ -114,6 +116,42 @@ class TravelDataAPI {
         }
 
         return data.destinations;
+      },
+      CachePresets.SEMI_STATIC
+    );
+  }
+
+  /**
+   * Get popular destinations - manually curated list of most popular travel destinations
+   */
+  async getPopularDestinations(): Promise<TravelDestination[]> {
+    const cacheKey = 'travel_popular_destinations';
+
+    return cache.getOrSet(
+      cacheKey,
+      async () => {
+        // Get all destinations from Tallinn
+        const tallinnCityId = '2552'; // Tallinn ID from JoinUp
+        const response = await fetch(`${this.baseUrl}/api/travel/data?type=destinations&cityId=${tallinnCityId}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch popular destinations: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to fetch popular destinations');
+        }
+
+        // Filter to manually selected popular destinations
+        const popularDestinationNames = ['Turkey', 'Egypt', 'Spain', 'Greece', 'Bulgaria', 'Tunisia'];
+        const allDestinations = data.destinations || [];
+
+        return popularDestinationNames
+          .map(name => allDestinations.find((dest: any) => dest.name === name))
+          .filter(Boolean)
+          .slice(0, 6);
       },
       CachePresets.SEMI_STATIC
     );

@@ -21,7 +21,7 @@ import {
 } from './config';
 
 // Import our new client-side API functions
-import { fetchCities, fetchDestinations } from './api';
+import { fetchCities, fetchDestinations, searchOffers } from './api';
 
 /**
  * JoinUp Baltic Travel Provider
@@ -129,9 +129,13 @@ export class JoinUpProvider extends TravelProvider {
         nights: params.nights || 7
       };
 
-      // TODO: Implement search functionality in providers/api.ts
-      // const offers = await searchJoinUpOffers(joinUpSearchParams);
-      const offers: any[] = [];
+      // Call the search API
+      const searchResult = await searchOffers(joinUpSearchParams);
+      const offers = searchResult.success ? (searchResult.offers || []) : [];
+
+      if (!searchResult.success) {
+        console.error(`❌ JoinUp search failed:`, searchResult.error);
+      }
 
       // Convert to our standard format
       const standardOffers = offers.map(offer => this.convertOfferToStandard(offer));

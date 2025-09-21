@@ -8,12 +8,14 @@ interface TravelOperator {
 }
 
 const travelOperators: TravelOperator[] = [
-  { name: 'TEZ tour', slug: 'tez-tour' },
   { name: 'Join Up', slug: 'join-up' },
-  { name: 'Itaka', slug: 'itaka' },
-  { name: 'Anex', slug: 'anex' },
-  { name: 'Novatours', slug: 'novatours' },
-  { name: 'Coral Travel', slug: 'coral-travel' },
+
+  // TODO: Uncomment when providers are integrated
+  // { name: 'TEZ tour', slug: 'tez-tour' },
+  // { name: 'Itaka', slug: 'itaka' },
+  // { name: 'Anex', slug: 'anex' },
+  // { name: 'Novatours', slug: 'novatours' },
+  // { name: 'Coral Travel', slug: 'coral-travel' },
 ];
 
 export default function TravelTermsPage(): JSX.Element {

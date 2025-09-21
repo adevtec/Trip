@@ -7,16 +7,13 @@ import {format} from 'date-fns';
 import {et} from 'date-fns/locale';
 import {useRouter} from 'next/navigation';
 
-import {travelData, type TravelCity} from '@/lib/travel-data';
-import {type DepartureCity} from '@/data/departureCities';
-import {type City} from '@/data/regions';
+import {travelData, type TravelCity, type TravelDestination} from '@/lib/travel-data';
 import RegionSelect from './components/RegionSelect';
 import TravelersInput, {type Traveler} from './components/TravelersInput';
 import AdvancedSearch from './components/AdvancedSearch';
 import DepartureCitySelect from './components/DepartureCitySelect';
 import type {DateRange} from 'react-day-picker';
 import DepartureCalendar from '@/components/DepartureCalendar';
-import {type Area, countries, type Country, type Resort} from '@/data/destinations';
 import AreaSelect, { getAreaDisplayText } from './components/AreaSelect';
 import NightsInput from './components/NightsInput';
 
@@ -32,7 +29,7 @@ export default function SearchEngine() {
   // Search state
   const [selectedDepartureCities, setSelectedDepartureCities] = useState<string[]>([]);
   const [isDepartureCityOpen, setIsDepartureCityOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [selectedCity, setSelectedCity] = useState<TravelDestination | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [travelers, setTravelers] = useState<Traveler>({
@@ -51,9 +48,6 @@ export default function SearchEngine() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [showCalendarError, setShowCalendarError] = useState(false);
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
-  const [selectedArea, setSelectedArea] = useState<Area | null>(null);
-  const [selectedResort, setSelectedResort] = useState<Resort | null>(null);
   const [isAreaSelectOpen, setIsAreaSelectOpen] = useState(false);
   const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [showAreaSelectError, setShowAreaSelectError] = useState(false);
@@ -202,22 +196,16 @@ export default function SearchEngine() {
     setIsAreaSelectOpen(true);
   };
 
-  const handleDestinationSelect = async (city: City | null) => {
-    console.log('🎯 FIXED handleDestinationSelect called with:', city);
-    console.log('🎯 FIXED handleDestinationSelect function triggered!');
-    const country = city ? (countries.find(c => c.id === city.country) || null) : null;
-    setSelectedCity(city);
-    setSelectedCountry(country);
-    setSelectedArea(null);
-    setSelectedResort(null);
+  const handleDestinationSelect = async (destination: TravelDestination | null) => {
+    console.log('🎯 handleDestinationSelect called with:', destination);
+    setSelectedCity(destination);
     setIsDestinationOpen(false);
-    console.log('✅ FIXED selectedCity set to:', city);
-    console.log('✅ FIXED State will update - forcing render');
+    console.log('✅ selectedCity set to:', destination);
 
-    if (city) {
+    if (destination) {
       // Load regions for this destination
       try {
-        const regionsData = await travelData.getRegions(undefined, city.id);
+        const regionsData = await travelData.getRegions(undefined, destination.id);
         setCurrentRegions(regionsData || []);
       } catch (error) {
         console.error('Failed to load regions for destination:', error);

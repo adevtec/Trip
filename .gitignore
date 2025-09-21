@@ -43,3 +43,10 @@ wp-content
 joinup-api/*
 #old/
 .idea/
+md_failid
+CLAUDE.md
+CLEANUP_LOG.md
+DETAILED_PROBLEM_ANALYSIS.md
+PROJECT_AUDIT.md
+PROJECT_GUIDE.md
+soovitused_otsingumootoriga.txt

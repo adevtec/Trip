@@ -50,7 +50,7 @@ export async function fetchAllPackages(): Promise<TravelPackage[]> {
 }
 
 // Placeholder functions for removed mock data
-export function getMealPlanById(_id: string) {
+export function getMealPlanById(_id: string): { id: string; name: string; code: string; description: string } | null {
   return null;
 }
 
