@@ -5,11 +5,46 @@
 - **This file** - Technical implementation notes and working progress
 - **Always consider provider-agnostic design** - Don't hardcode JoinUp-specific logic
 
+## 🆕 MAJOR UPDATE (2025-09-24): IMAGE SYSTEM & REGION GROUPING FIXES
+### ✅ COMPLETED: Local Image System Implementation
+- **Hero Image**: Restored original Maldives water villa (`/images/hero.jpg`)
+- **Continent Images**: All 6 downloaded locally (`/public/images/continents/`)
+- **Destination Images**: 9 authentic Wikimedia Commons images (`/public/images/destinations/`)
+- **No External Dependencies**: Platform works offline with local images only
+
+### ✅ COMPLETED: AreaSelect Region Grouping Bug Fix
+- **Problem**: Greece regions showed flat list instead of hierarchical groups
+- **Root Cause**: Grouping logic prioritized JoinUp `region` field over text parsing
+- **Solution**: Smart text parsing first, then JoinUp fallback
+- **Result**: All countries now show proper hierarchical regions:
+  - Egypt: Alexandria, Hurghada, Sharm EL Sheikh, etc groups
+  - Turkey: Alanya, Antalya, Belek, Kemer, etc groups
+  - Greece: Chania, Heraklion, Rethymno, etc groups (fixed!)
+  - Other countries: Automatic detection of best grouping method
+
 ## CRITICAL: AVOID DUPLICATE FILES
-- Always check for existing files before creating new ones
+- Always check for existing files before creating new one
 - Use `find` and `ls` commands to verify file structure
 - SearchEngine components are in `/src/components/SearchEngine/` NOT `/src/components/`
 - RegionSelect, AreaSelect, TravelersInput etc are in subdirectories
+
+## ⚠️ CRITICAL: RIIKIDE PILTIDE REEGLID
+**OLULINE - KUNAGI EI TOHI:**
+- ❌ Kasutada sama pilti erinevatel riikidel (duplikaadid)
+- ❌ Kasutada vale riigi pilti (nt Itaalia pilt Türgi jaoks)
+- ❌ Kasutada üldiseid/mittekonkreetseid pilte (nt hotelli bassein)
+- ❌ Kasutada poolikuid/halva kvaliteediga pilte
+
+**ALATI PEAD:**
+- ✅ Iga riik peab omama UNIKAALSET pilti
+- ✅ Pilt peab kajastama ÕIGET riiki (nt Egiptus = püramiidid/kaamelid)
+- ✅ Kontrollida `node -e` skriptiga duplikaate enne muudatuste tegemist
+- ✅ Testida pilti cURL-iga (HTTP 200)
+
+**Current Image System:** `/src/utils/imageUtils.ts` - Local images only, no external URLs
+- `TRAVEL_IMAGES.hero` → `/images/hero.jpg` (Maldives)
+- `TRAVEL_IMAGES.continents` → `/images/continents/` (6 files)
+- `TRAVEL_IMAGES.destinations` → `/images/destinations/` (9 authentic landmarks)
 
 ## Current Working Files
 ### Main SearchEngine
@@ -68,9 +103,18 @@ rm -rf .next && npm run dev
 3. Clear cache if components not updating
 4. Verify prop names match between parent/child components
 
-## 🎉 **MAJOR MILESTONE: COMPLETE PLATFORM CLEANUP (2025-09-21)**
+## 🎉 **MAJOR MILESTONE: COMPLETE PLATFORM CLEANUP (2025-09-22)**
 
 ### **ALL CRITICAL ISSUES RESOLVED - PLATFORM NOW PRODUCTION-READY**
+
+## ✅ **PHASE 3 COMPLETED (Hotellide Pildid - 2025-09-22)**
+
+### 6. **Implementeeri JoinUp hotellide pildid**
+- **Files**: `/src/app/api/providers/joinup/api.ts`, `/src/app/api/providers/joinup/provider.ts`
+- **Problem**: Hotellid kuvasid placeholder/vale pilte
+- **Solution**: Eager loading - search ajal laeme iga hotelli jaoks päris pildid
+- **Result**: ✅ Hotellid kuvatakse ainult oma õigete piltidega JoinUp CMS-ist
+- **API**: SearchTour_HOTELINFO endpoint `hotel.images[]` array
 
 ## ✅ **PHASE 1 COMPLETED (Critical Platform Fixes)**
 
@@ -141,7 +185,12 @@ The architecture is now prepared for adding new travel providers:
 - Removed duplicate SearchEngine.tsx, RegionSelect/, AreaSelect/ from root components/
 - Fixed TravelersInput props (travelers/onTravelersChange)
 - Fixed AdvancedSearch props (isOpen/options/onOptionsChange)
-- ✅ **NEW**: Fixed JoinUp API returning wrong regions for Egypt (TOWNFROMINC missing)
+- ✅ Fixed JoinUp API returning wrong regions for Egypt (TOWNFROMINC missing)
+- ✅ **LATEST**: Fixed AreaSelect region grouping bug for Greece (2025-09-24)
+  - **Issue**: Greece showed flat list "Chania - Kolymbari" instead of hierarchical groups
+  - **Fix**: Changed grouping priority from JoinUp `region` field to text parsing first
+  - **Location**: `/src/components/SearchEngine/components/AreaSelect/index.tsx:161-189`
+  - **Result**: All countries now show proper collapsible region groups
 - ✅ **NEW**: Implemented hierarchical AreaSelect with collapsible regions like screenshot
 - ✅ **NEW**: Fixed DepartureCitySelect props mismatch (onSelectAction → onChangeAction) in SearchEngine
 - ✅ **NEW**: Fixed TypeScript errors in SearchEngine (DepartureCalendar props, NightsInput props, unused variables)
@@ -149,5 +198,13 @@ The architecture is now prepared for adding new travel providers:
 - ✅ **NEW**: Fixed API to include JoinUp region/regionKey fields for true hierarchical data
 - ✅ **NEW**: Updated grouping algorithm to use JoinUp's region field instead of text parsing
 - ✅ **NEW**: Fixed departure city display to show actual city names ("Tallinn (Estonia)") instead of count ("1 linn valitud")
-- ✅ **NEW**: Created PROJECT_GUIDE.md with comprehensive business logic and architecture strategy
-- ⚠️ **IDENTIFIED**: Current AreaSelect grouping is JoinUp-specific, needs provider-agnostic refactor
+- ✅ Created PROJECT_GUIDE.md with comprehensive business logic and architecture strategy
+- ✅ **RESOLVED**: AreaSelect grouping is now fully provider-agnostic (2025-09-24)
+- ✅ Implemented complete navigation hierarchy: Continent → Country → Region with real JoinUp API data
+- ✅ Country page shows regions, Region page shows search link and region details
+
+## 📁 Key Files Modified Today (2025-09-24)
+- `/src/components/SearchEngine/components/AreaSelect/index.tsx` - Fixed region grouping logic
+- `/src/utils/imageUtils.ts` - Converted to local image system, restored hero image
+- `/public/images/` - Added hero.jpg, continents/, destinations/ directories
+- `CLAUDE.md` - Updated with latest fixes and local image system documentation

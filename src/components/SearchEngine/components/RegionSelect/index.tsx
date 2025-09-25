@@ -2,12 +2,11 @@
 
 import {useEffect, useRef, useState} from 'react';
 import {Check, Search} from 'lucide-react';
-import {type City} from '@/data/regions';
 import {travelData, type TravelDestination} from '@/lib/travel-data';
 
 export interface RegionSelectProps {
-  selectedCity: City | null;
-  onSelectAction: (city: City | null) => void;
+  selectedCity: TravelDestination | null;
+  onSelectAction: (city: TravelDestination | null) => void;
   selectedDepartureCities: string[];
   onCloseAction: () => void;
 }
@@ -23,7 +22,7 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
     async function loadDestinations() {
       console.log('🔍 RegionSelect: selectedDepartureCities:', selectedDepartureCities);
 
-      // Allow search without departure cities - load all destinations
+      // Allow search without departure cities - load ALL destinations from all cities
       if (selectedDepartureCities.length === 0) {
         try {
           setLoading(true);
@@ -31,19 +30,17 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
           const allAvailableCities = await travelData.getCities();
           const allDestinations: TravelDestination[] = [];
 
-          // Get destinations from first few cities to populate the list
-          const sampleCities = allAvailableCities.slice(0, 3); // Use first 3 cities as sample
-
-          for (const city of sampleCities) {
+          // Get destinations from ALL cities to show complete offering
+          for (const city of allAvailableCities) {
             try {
               const cityDestinations = await travelData.getDestinations(city.id);
               allDestinations.push(...cityDestinations);
             } catch (error) {
-              console.warn(`Failed to load destinations for ${city.id}:`, error);
+              console.warn(`Failed to load destinations for ${city.name}:`, error);
             }
           }
 
-          // Remove duplicates
+          // Remove duplicates by destination name
           const uniqueDestinations = Array.from(
             new Map(allDestinations.map(dest => [dest.name.toLowerCase(), dest])).values()
           );
@@ -110,11 +107,13 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
   const displayDestinations = filteredApiDestinations.map(dest => ({
     id: dest.id,
     name: dest.name,
-    provider: dest.provider
+    nameAlt: dest.nameAlt,
+    provider: dest.provider,
+    fromCityId: dest.fromCityId
   }));
 
   // Destination click handler
-  const handleDestinationClick = (destination: { id: string; name: string }) => {
+  const handleDestinationClick = (destination: TravelDestination) => {
     console.log('🔥 RegionSelect handleDestinationClick:', destination);
     console.log('🔥 RegionSelect About to call onSelectAction...');
     if (selectedCity?.id === destination.id) {
@@ -122,13 +121,8 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
       onSelectAction(null);
     } else {
       console.log('✅ Selecting new destination');
-      const cityObject = { id: destination.id, name: destination.name, country: destination.name };
-      console.log('🚀 RegionSelect calling onSelectAction with:', cityObject);
-      console.log('🚀 RegionSelect onSelectAction type:', typeof onSelectAction);
-      console.log('🚀 RegionSelect onSelectAction function name:', onSelectAction.name);
-      console.log('🚀 RegionSelect onSelectAction function preview:', onSelectAction.toString().substring(0, 150));
-      console.log('🚀 RegionSelect CALLING onSelectAction NOW...');
-      onSelectAction(cityObject);
+      console.log('🚀 RegionSelect calling onSelectAction with TravelDestination:', destination);
+      onSelectAction(destination);
       console.log('✅ RegionSelect onSelectAction COMPLETED');
     }
     onCloseAction();

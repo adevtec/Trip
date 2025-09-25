@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Continent, Country } from '@/types/destinations';
-import { getContinentById, getCountriesByContinent } from '@/data/mock';
+import { travelData, type TravelDestination } from '@/lib/travel-data';
+import { ContinentInfo } from '@/lib/continent-mapping';
+import { TRAVEL_IMAGES } from '@/utils/imageUtils';
 
 /**
  * Continent page component
@@ -15,27 +16,31 @@ export default function ContinentPage() {
   const params = useParams();
   const continentId = params.continentId as string;
   
-  const [continent, setContinent] = useState<Continent | null>(null);
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [continent, setContinent] = useState<ContinentInfo | null>(null);
+  const [countries, setCountries] = useState<TravelDestination[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      
-      // Get continent data
-      const continentData = getContinentById(continentId);
-      if (continentData) {
-        setContinent(continentData);
+
+      try {
+        // Get continent data
+        const continentData = await travelData.getContinent(continentId);
+        if (continentData) {
+          setContinent(continentData);
+        }
+
+        // Get countries in this continent
+        const countriesData = await travelData.getCountriesByContinent(continentId);
+        setCountries(countriesData);
+      } catch (error) {
+        console.error('Failed to load continent data:', error);
       }
-      
-      // Get countries in this continent
-      const countriesData = getCountriesByContinent(continentId);
-      setCountries(countriesData);
-      
+
       setLoading(false);
     };
-    
+
     fetchData();
   }, [continentId]);
   
@@ -68,7 +73,7 @@ export default function ContinentPage() {
         <p className="text-gray-600 mb-4">{continent.description}</p>
         <div className="relative h-64 w-full rounded-lg overflow-hidden mb-6">
           <Image
-            src={continent.image || '/placeholder-continent.jpg'}
+            src={TRAVEL_IMAGES.continents[continent.id as keyof typeof TRAVEL_IMAGES.continents] || '/placeholder-continent.jpg'}
             alt={continent.name}
             fill
             sizes="100vw"
@@ -91,7 +96,7 @@ export default function ContinentPage() {
             >
               <div className="relative h-48 w-full">
                 <Image
-                  src={country.image || '/placeholder-country.jpg'}
+                  src={TRAVEL_IMAGES.destinations[country.name.toLowerCase() as keyof typeof TRAVEL_IMAGES.destinations] || '/placeholder-country.jpg'}
                   alt={country.name}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -100,7 +105,7 @@ export default function ContinentPage() {
               </div>
               <div className="p-4">
                 <h3 className="text-xl font-bold mb-2">{country.name}</h3>
-                <p className="text-gray-600 line-clamp-2">{country.description}</p>
+                <p className="text-gray-600 line-clamp-2">Avasta {country.name} reisipaketid</p>
               </div>
             </Link>
           ))}

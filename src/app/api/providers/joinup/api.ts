@@ -100,10 +100,10 @@ export async function fetchCities(): Promise<{ success: boolean; cities?: JoinUp
     const data = await response.json();
     
     // Debug: Log the response structure
-    console.log('🏙️ JoinUp Cities API Response keys:', Object.keys(data));
-    if (data.SearchTour_TOWNFROMS) {
-      console.log('🏙️ Cities count:', Object.keys(data.SearchTour_TOWNFROMS).length);
-    }
+    // console.log('🏙️ JoinUp Cities API Response keys:', Object.keys(data));
+    // if (data.SearchTour_TOWNFROMS) {
+    //   console.log('🏙️ Cities count:', Object.keys(data.SearchTour_TOWNFROMS).length);
+    // }
 
     // Transform JoinUp response to our format and filter out unwanted cities
     if (data.SearchTour_TOWNFROMS) {
@@ -177,7 +177,7 @@ export async function fetchDestinations(cityId: string): Promise<{ success: bool
     // Fetch destinations from JoinUp API using actual parameter names (API expects TOWNFROMINC not townfrom_id)
     const apiUrl = `${JOINUP_API_BASE_URL}&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_STATES&TOWNFROMINC=${cityId}`;
 
-    console.log('🔗 JoinUp Destinations API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
+    // console.log('🔗 JoinUp Destinations API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -194,12 +194,12 @@ export async function fetchDestinations(cityId: string): Promise<{ success: bool
     const data = await response.json();
     
     // Debug: Log the actual response to understand the structure
-    console.log('🔍 JoinUp API Response:', JSON.stringify(data, null, 2));
+    // console.log('🔍 JoinUp API Response:', JSON.stringify(data, null, 2));
 
     if (data.SearchTour_STATES) {
       const destinations = Object.values(data.SearchTour_STATES).map((destination: any, index: number) => {
         // Debug: Log each destination to see what's missing
-        console.log(`🎯 Destination ${index}:`, destination);
+        // console.log(`🎯 Destination ${index}:`, destination);
         
         if (!destination.id) {
           console.warn(`⚠️ Destination ${index} missing ID:`, destination);
@@ -331,7 +331,7 @@ export async function fetchRegions(destinationId: string, departureCityId?: stri
     // Fetch regions/towns from JoinUp API with both TOWNFROMINC and STATEINC
     const apiUrl = `${JOINUP_API_BASE_URL}&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_TOWNS&TOWNFROMINC=${townFromId}&STATEINC=${destinationId}`;
 
-    console.log('🏖️ JoinUp Regions API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
+    // console.log('🏖️ JoinUp Regions API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
 
     const response = await fetch(apiUrl, {
       method: 'GET',
@@ -352,7 +352,7 @@ export async function fetchRegions(destinationId: string, departureCityId?: stri
     // Debug: Log a single region to see its structure
     if (data.SearchTour_TOWNS && Object.keys(data.SearchTour_TOWNS).length > 0) {
       const firstRegion = Object.values(data.SearchTour_TOWNS)[0];
-      console.log('🔍 First region structure:', JSON.stringify(firstRegion, null, 2));
+      // console.log('🔍 First region structure:', JSON.stringify(firstRegion, null, 2));
     }
 
     if (data.SearchTour_TOWNS) {
@@ -532,6 +532,60 @@ export async function searchOffers(searchParams: any): Promise<{ success: boolea
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to search offers'
+    };
+  }
+}
+
+/**
+ * Get detailed hotel information including images
+ */
+export async function getHotelInfo(hotelId: string): Promise<{ success: boolean; hotel?: any; error?: string }> {
+  try {
+    const credentials = getJoinUpCredentials();
+
+    if (!credentials.oauth_token) {
+      return { success: false, error: 'JoinUp OAuth token not configured' };
+    }
+
+    const url = `${JOINUP_API_BASE_URL}?samo_action=api&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_HOTELINFO&HOTELINC=${hotelId}&LANG=EN`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Eksootikareisid/1.0',
+        'Accept': 'application/json',
+      },
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const hotelData = data.SearchTour_HOTELINFO?.[0];
+
+    if (!hotelData) {
+      return { success: false, error: 'Hotel information not found' };
+    }
+
+    // Extract images from media section
+    const images = (hotelData.media || [])
+      .filter((item: any) => item.type === 'image')
+      .map((item: any) => item.url);
+
+    const hotel = {
+      id: hotelData.hoteldata?.id || hotelId,
+      name: hotelData.hoteldata?.name || 'Unknown Hotel',
+      category: hotelData.hoteldata?.category || 3,
+      images: images
+    };
+
+    return { success: true, hotel };
+
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch hotel information'
     };
   }
 }

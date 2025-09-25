@@ -8,6 +8,7 @@ export interface AreaSelectProps {
   selectedAreas: string[];
   onSelectAction: (areas: string[]) => void;
   destinationId: string;
+  fromCityId: string;
   onCloseAction: () => void;
 }
 
@@ -21,32 +22,33 @@ export function getAreaDisplayText(selectedAreaIds: string[], allRegions: any[])
     const groups: { [key: string]: RegionGroup } = {};
 
     regions.forEach(region => {
-      // PRIORITY 1: Use JoinUp's region field (most accurate)
-      let groupName = region.region || region.name;
+      let groupName = region.name; // Start with full name
 
-      // FALLBACK: Smart text parsing for non-JoinUp providers
-      if (!region.region) {
+      // PRIORITY 1: Smart text parsing for hierarchical names
+      if (region.name.includes(' - ')) {
         // Pattern 1: "Parent - Child" format (e.g., "Chania - Agia Marina")
-        if (region.name.includes(' - ')) {
-          const parts = region.name.split(' - ');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split(' - ');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      else if (region.name.includes(' / ')) {
         // Pattern 2: "Parent / Child" format (e.g., "Sharm El Sheikh / Naama Bay")
-        else if (region.name.includes(' / ')) {
-          const parts = region.name.split(' / ');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split(' / ');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      else if (region.name.includes('/')) {
         // Pattern 3: "Parent/Child" format (e.g., "Alexandria/Montazah")
-        else if (region.name.includes('/')) {
-          const parts = region.name.split('/');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split('/');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      // PRIORITY 2: Use JoinUp's region field if no hierarchical pattern found
+      else if (region.region && region.region !== region.name) {
+        groupName = region.region;
       }
 
       if (!groups[groupName]) {
@@ -104,7 +106,7 @@ interface RegionGroup {
   }>;
 }
 
-export default function AreaSelect({ selectedAreas, onSelectAction, destinationId, onCloseAction }: AreaSelectProps) {
+export default function AreaSelect({ selectedAreas, onSelectAction, destinationId, fromCityId, onCloseAction }: AreaSelectProps) {
   const [search, setSearch] = useState('');
   const [regions, setRegions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,9 +127,9 @@ export default function AreaSelect({ selectedAreas, onSelectAction, destinationI
 
       try {
         setLoading(true);
-        console.log('🏖️ AreaSelect Loading regions for destinationId:', destinationId);
+        console.log('🏖️ AreaSelect Loading regions for destinationId:', destinationId, 'fromCityId:', fromCityId);
 
-        const regionsData = await travelData.getRegions(undefined, destinationId);
+        const regionsData = await travelData.getRegions(fromCityId, destinationId);
         console.log('✅ AreaSelect Got regions count:', regionsData?.length);
 
         setRegions(regionsData || []);
@@ -140,7 +142,7 @@ export default function AreaSelect({ selectedAreas, onSelectAction, destinationI
     }
 
     loadRegions();
-  }, [destinationId]);
+  }, [destinationId, fromCityId]);
 
   // Click-outside handler
   useEffect(() => {
@@ -154,37 +156,38 @@ export default function AreaSelect({ selectedAreas, onSelectAction, destinationI
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onCloseAction]);
 
-  // Group regions hierarchically using JoinUp region data
+  // Group regions hierarchically using smart text parsing and JoinUp data
   const groupRegions = (regions: any[]): RegionGroup[] => {
     const groups: { [key: string]: RegionGroup } = {};
 
     regions.forEach(region => {
-      // PRIORITY 1: Use JoinUp's region field (most accurate)
-      let groupName = region.region || region.name;
+      let groupName = region.name; // Start with full name
 
-      // FALLBACK: Smart text parsing for non-JoinUp providers
-      if (!region.region) {
+      // PRIORITY 1: Smart text parsing for hierarchical names
+      if (region.name.includes(' - ')) {
         // Pattern 1: "Parent - Child" format (e.g., "Chania - Agia Marina")
-        if (region.name.includes(' - ')) {
-          const parts = region.name.split(' - ');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split(' - ');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      else if (region.name.includes(' / ')) {
         // Pattern 2: "Parent / Child" format (e.g., "Sharm El Sheikh / Naama Bay")
-        else if (region.name.includes(' / ')) {
-          const parts = region.name.split(' / ');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split(' / ');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      else if (region.name.includes('/')) {
         // Pattern 3: "Parent/Child" format (e.g., "Alexandria/Montazah")
-        else if (region.name.includes('/')) {
-          const parts = region.name.split('/');
-          if (parts.length >= 2) {
-            groupName = parts[0].trim();
-          }
+        const parts = region.name.split('/');
+        if (parts.length >= 2) {
+          groupName = parts[0].trim();
         }
+      }
+      // PRIORITY 2: Use JoinUp's region field if no hierarchical pattern found
+      else if (region.region && region.region !== region.name) {
+        groupName = region.region;
       }
 
       if (!groups[groupName]) {

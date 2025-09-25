@@ -314,6 +314,7 @@ export default function SearchEngine() {
                     selectedAreas={selectedAreaIds}
                     onSelectAction={setSelectedAreaIds}
                     destinationId={selectedCity.id}
+                    fromCityId={selectedCity.fromCityId}
                     onCloseAction={() => setIsAreaSelectOpen(false)}
                   />
                 )}

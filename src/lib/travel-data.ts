@@ -4,6 +4,13 @@
  */
 
 import { cache, CachePresets } from './cache';
+import {
+  type ContinentInfo,
+  getAllContinents,
+  getContinentInfo,
+  getContinentForDestination,
+  getDestinationsForContinent
+} from './continent-mapping';
 
 export interface TravelCity {
   id: string;
@@ -335,6 +342,43 @@ class TravelDataAPI {
    */
   getCacheStats() {
     return cache.getStats();
+  }
+
+  /**
+   * Get all continents
+   */
+  async getContinents(): Promise<ContinentInfo[]> {
+    return getAllContinents();
+  }
+
+  /**
+   * Get continent by ID
+   */
+  async getContinent(continentId: string): Promise<ContinentInfo | null> {
+    return getContinentInfo(continentId);
+  }
+
+  /**
+   * Get countries (destinations) for a continent
+   */
+  async getCountriesByContinent(continentId: string): Promise<TravelDestination[]> {
+    const destinationNames = getDestinationsForContinent(continentId);
+
+    // Get all destinations from API
+    const tallinnCityId = '2552'; // Default to Tallinn
+    const allDestinations = await this.getDestinations(tallinnCityId);
+
+    // Filter destinations that belong to this continent
+    return allDestinations.filter(dest =>
+      destinationNames.includes(dest.name)
+    );
+  }
+
+  /**
+   * Get continent for a destination
+   */
+  async getContinentForDestination(destinationName: string): Promise<string | null> {
+    return getContinentForDestination(destinationName);
   }
 }
 

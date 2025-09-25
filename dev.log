@@ -1,0 +1,399 @@
+
+> eksootikareisid@0.1.0 dev
+> next dev
+
+- info Loaded env from /Users/andrepark/trip_app/eksootikareisid-new/.env.local
+- [33mwarn[39m Port 3000 is in use, trying 3001 instead.
+- [33mwarn[39m Port 3001 is in use, trying 3002 instead.
+- [33mwarn[39m Port 3002 is in use, trying 3003 instead.
+- [32mready[39m started server on [::]:3003, url: http://localhost:3003
+- [35mevent[39m compiled client and server successfully in 59 ms (20 modules)
+- [36mwait[39m compiling...
+- [35mevent[39m compiled client and server successfully in 70 ms (20 modules)
+- [36minfo[39m Loaded env from /Users/andrepark/trip_app/eksootikareisid-new/.env.local
+- [36minfo[39m Loaded env from /Users/andrepark/trip_app/eksootikareisid-new/.env.local
+- [36mwait[39m compiling /api/travel/data/route (client and server)...
+- [35mevent[39m compiled successfully in 161 ms (71 modules)
+🏖️ JoinUp Regions API URL: https://online.joinupbaltic.eu/export/default.php?samo_action=api&version=1.0&oauth_token=TOKEN_HIDDEN&type=json&action=SearchTour_TOWNS&TOWNFROMINC=2552&STATEINC=58
+🏖️ JoinUp SearchTour_TOWNS Response: {
+  "SearchTour_TOWNS": [
+    {
+      "id": 2410,
+      "name": "Hammamet",
+      "nameAlt": "Hammamet",
+      "region": "Hammamet",
+      "regionAlt": "Hammamet",
+      "regionKey": 255,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2413,
+      "name": "Mahdia",
+      "nameAlt": "Mahdia",
+      "region": "Mahdia",
+      "regionAlt": "Mahdia",
+      "regionKey": 258,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2412,
+      "name": "Monastir",
+      "nameAlt": "Monastir",
+      "region": "Monastir",
+      "regionAlt": "Monastir",
+      "regionKey": 531,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2430,
+      "name": "Nabeul",
+      "nameAlt": "Nabeul",
+      "region": "Nabeul",
+      "regionAlt": "Nabeul",
+      "regionKey": 259,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2490,
+      "name": "Port El Kantaoui",
+      "nameAlt": "Port El Kantauy",
+      "region": "Port El Kantauy",
+      "regionAlt": "Port El Kantauy",
+      "regionKey": 549,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2409,
+      "name": "Sousse",
+      "nameAlt": "Sousse",
+      "region": "Sousse",
+      "regionAlt": "Sousse",
+      "regionKey": 257,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1110,
+      "name": "Hammamet",
+      "nameAlt": "*Hammamet",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1114,
+      "name": "Tunisia",
+      "nameAlt": "*Tunisia",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2411,
+      "name": "Yasmin-Hammamet",
+      "nameAlt": "Yasmine Hammamet",
+      "region": "Yasmine Hammamet",
+      "regionAlt": "Yasmine Hammamet",
+      "regionKey": 530,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    }
+  ]
+}
+🔍 First region structure: {
+  "id": 2410,
+  "name": "Hammamet",
+  "nameAlt": "Hammamet",
+  "region": "Hammamet",
+  "regionAlt": "Hammamet",
+  "regionKey": 255,
+  "districts": [],
+  "districtsSelected": 0,
+  "regionSelected": 0,
+  "selected": 0
+}
+🏖️ JoinUp Regions API URL: https://online.joinupbaltic.eu/export/default.php?samo_action=api&version=1.0&oauth_token=TOKEN_HIDDEN&type=json&action=SearchTour_TOWNS&TOWNFROMINC=2552&STATEINC=58
+🏖️ JoinUp SearchTour_TOWNS Response: {
+  "SearchTour_TOWNS": [
+    {
+      "id": 2410,
+      "name": "Hammamet",
+      "nameAlt": "Hammamet",
+      "region": "Hammamet",
+      "regionAlt": "Hammamet",
+      "regionKey": 255,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2413,
+      "name": "Mahdia",
+      "nameAlt": "Mahdia",
+      "region": "Mahdia",
+      "regionAlt": "Mahdia",
+      "regionKey": 258,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2412,
+      "name": "Monastir",
+      "nameAlt": "Monastir",
+      "region": "Monastir",
+      "regionAlt": "Monastir",
+      "regionKey": 531,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2430,
+      "name": "Nabeul",
+      "nameAlt": "Nabeul",
+      "region": "Nabeul",
+      "regionAlt": "Nabeul",
+      "regionKey": 259,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2490,
+      "name": "Port El Kantaoui",
+      "nameAlt": "Port El Kantauy",
+      "region": "Port El Kantauy",
+      "regionAlt": "Port El Kantauy",
+      "regionKey": 549,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2409,
+      "name": "Sousse",
+      "nameAlt": "Sousse",
+      "region": "Sousse",
+      "regionAlt": "Sousse",
+      "regionKey": 257,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1110,
+      "name": "Hammamet",
+      "nameAlt": "*Hammamet",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1114,
+      "name": "Tunisia",
+      "nameAlt": "*Tunisia",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2411,
+      "name": "Yasmin-Hammamet",
+      "nameAlt": "Yasmine Hammamet",
+      "region": "Yasmine Hammamet",
+      "regionAlt": "Yasmine Hammamet",
+      "regionKey": 530,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    }
+  ]
+}
+🔍 First region structure: {
+  "id": 2410,
+  "name": "Hammamet",
+  "nameAlt": "Hammamet",
+  "region": "Hammamet",
+  "regionAlt": "Hammamet",
+  "regionKey": 255,
+  "districts": [],
+  "districtsSelected": 0,
+  "regionSelected": 0,
+  "selected": 0
+}
+🏖️ JoinUp Regions API URL: https://online.joinupbaltic.eu/export/default.php?samo_action=api&version=1.0&oauth_token=TOKEN_HIDDEN&type=json&action=SearchTour_TOWNS&TOWNFROMINC=2552&STATEINC=58
+🏖️ JoinUp SearchTour_TOWNS Response: {
+  "SearchTour_TOWNS": [
+    {
+      "id": 2410,
+      "name": "Hammamet",
+      "nameAlt": "Hammamet",
+      "region": "Hammamet",
+      "regionAlt": "Hammamet",
+      "regionKey": 255,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2413,
+      "name": "Mahdia",
+      "nameAlt": "Mahdia",
+      "region": "Mahdia",
+      "regionAlt": "Mahdia",
+      "regionKey": 258,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2412,
+      "name": "Monastir",
+      "nameAlt": "Monastir",
+      "region": "Monastir",
+      "regionAlt": "Monastir",
+      "regionKey": 531,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2430,
+      "name": "Nabeul",
+      "nameAlt": "Nabeul",
+      "region": "Nabeul",
+      "regionAlt": "Nabeul",
+      "regionKey": 259,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2490,
+      "name": "Port El Kantaoui",
+      "nameAlt": "Port El Kantauy",
+      "region": "Port El Kantauy",
+      "regionAlt": "Port El Kantauy",
+      "regionKey": 549,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2409,
+      "name": "Sousse",
+      "nameAlt": "Sousse",
+      "region": "Sousse",
+      "regionAlt": "Sousse",
+      "regionKey": 257,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1110,
+      "name": "Hammamet",
+      "nameAlt": "*Hammamet",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 1114,
+      "name": "Tunisia",
+      "nameAlt": "*Tunisia",
+      "region": "Tunisia",
+      "regionAlt": "Tunisia",
+      "regionKey": 213,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    },
+    {
+      "id": 2411,
+      "name": "Yasmin-Hammamet",
+      "nameAlt": "Yasmine Hammamet",
+      "region": "Yasmine Hammamet",
+      "regionAlt": "Yasmine Hammamet",
+      "regionKey": 530,
+      "districts": [],
+      "districtsSelected": 0,
+      "regionSelected": 0,
+      "selected": 0
+    }
+  ]
+}
+🔍 First region structure: {
+  "id": 2410,
+  "name": "Hammamet",
+  "nameAlt": "Hammamet",
+  "region": "Hammamet",
+  "regionAlt": "Hammamet",
+  "regionKey": 255,
+  "districts": [],
+  "districtsSelected": 0,
+  "regionSelected": 0,
+  "selected": 0
+}
+- [36mwait[39m compiling /continent/[continentId]/[countryId]/page (client and server)...
+(node:89030) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+- [35mevent[39m compiled client and server successfully in 1238 ms (712 modules)
+- [36mwait[39m compiling...
+- [35mevent[39m compiled successfully in 47 ms (381 modules)
+🌐 TravelDataAPI baseUrl: http://localhost:3000
+[?25h

@@ -5,14 +5,8 @@ import { JoinUpConfig, JoinUpEndpoints } from './types';
  * Based on analysis of eksootikareisid-old PHP implementation
  */
 
-// Development and Production URLs
-export const JOINUP_API_URLS = {
-  development: 'https://devonline.joinupbaltic.eu/export/default.php?samo_action=api',
-  production: 'https://online.joinupbaltic.eu/export/default.php?samo_action=api',
-} as const;
-
-// Always use production URL since development URL doesn't work
-export const JOINUP_API_BASE_URL = JOINUP_API_URLS.production;
+// JoinUp Baltic API Base URL
+export const JOINUP_API_BASE_URL = 'https://online.joinupbaltic.eu/export/default.php?samo_action=api';
 
 export const JOINUP_API_ENDPOINTS: JoinUpEndpoints = {
   // Core search endpoints

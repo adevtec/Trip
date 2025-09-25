@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Country, Region } from '@/types/destinations';
-import { getCountryById, getRegionsByCountry } from '@/data/mock';
+import { travelData, type TravelDestination, type TravelRegion } from '@/lib/travel-data';
+import { TRAVEL_IMAGES, getRegionImage } from '@/utils/imageUtils';
 
 /**
  * Country page component
@@ -16,27 +16,34 @@ export default function CountryPage() {
   const continentId = params.continentId as string;
   const countryId = params.countryId as string;
   
-  const [country, setCountry] = useState<Country | null>(null);
-  const [regions, setRegions] = useState<Region[]>([]);
+  const [country, setCountry] = useState<TravelDestination | null>(null);
+  const [regions, setRegions] = useState<TravelRegion[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      
-      // Get country data
-      const countryData = getCountryById(countryId);
-      if (countryData) {
-        setCountry(countryData);
+
+      try {
+        // Get all destinations and find the specific country
+        const tallinnCityId = '2552'; // Default city
+        const destinations = await travelData.getDestinations(tallinnCityId);
+        const countryData = destinations.find(dest => dest.id === countryId);
+
+        if (countryData) {
+          setCountry(countryData);
+
+          // Get regions for this destination
+          const regionsData = await travelData.getRegions(tallinnCityId, countryId);
+          setRegions(regionsData);
+        }
+      } catch (error) {
+        console.error('Failed to load country data:', error);
       }
-      
-      // Get regions in this country
-      const regionsData = getRegionsByCountry(countryId);
-      setRegions(regionsData);
-      
+
       setLoading(false);
     };
-    
+
     fetchData();
   }, [countryId]);
   
@@ -66,10 +73,10 @@ export default function CountryPage() {
     <div className="container mx-auto p-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">{country.name}</h1>
-        <p className="text-gray-600 mb-4">{country.description}</p>
+        <p className="text-gray-600 mb-4">Avasta {country.name} regioonid</p>
         <div className="relative h-64 w-full rounded-lg overflow-hidden mb-6">
-                    <Image
-            src={country.image || '/placeholder-country.jpg'}
+          <Image
+            src={TRAVEL_IMAGES.destinations[country.name.toLowerCase() as keyof typeof TRAVEL_IMAGES.destinations] || '/placeholder-country.jpg'}
             alt={country.name}
             fill
             sizes="100vw"
@@ -91,8 +98,8 @@ export default function CountryPage() {
               className="block bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <div className="relative h-48 w-full">
-                                <Image
-                  src={region.image || '/placeholder-region.jpg'}
+                <Image
+                  src={getRegionImage(region.name)}
                   alt={region.name}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -101,7 +108,7 @@ export default function CountryPage() {
               </div>
               <div className="p-4">
                 <h3 className="text-xl font-bold mb-2">{region.name}</h3>
-                <p className="text-gray-600 line-clamp-2">{region.description}</p>
+                <p className="text-gray-600 line-clamp-2">{region.nameAlt || 'Avasta see piirkond'}</p>
               </div>
             </Link>
           ))}

@@ -21,7 +21,7 @@ import {
 } from './config';
 
 // Import our new client-side API functions
-import { fetchCities, fetchDestinations, searchOffers } from './api';
+import { fetchCities, fetchDestinations, searchOffers, getHotelInfo } from './api';
 
 /**
  * JoinUp Baltic Travel Provider
@@ -137,8 +137,31 @@ export class JoinUpProvider extends TravelProvider {
         console.error(`❌ JoinUp search failed:`, searchResult.error);
       }
 
+      // Load hotel images for each offer
+      const offersWithImages = await Promise.all(
+        offers.map(async (offer: any) => {
+          if (offer.hotelKey) {
+            try {
+              const hotelInfo = await getHotelInfo(offer.hotelKey);
+              if (hotelInfo.success && hotelInfo.hotel) {
+                return {
+                  ...offer,
+                  hotel: {
+                    ...offer.hotel,
+                    images: hotelInfo.hotel.images || []
+                  }
+                };
+              }
+            } catch (error) {
+              console.warn(`Failed to load images for hotel ${offer.hotelKey}:`, error);
+            }
+          }
+          return offer;
+        })
+      );
+
       // Convert to our standard format
-      const standardOffers = offers.map(offer => this.convertOfferToStandard(offer));
+      const standardOffers = offersWithImages.map(offer => this.convertOfferToStandard(offer));
 
       console.log(`✅ JoinUp search completed: ${standardOffers.length} offers found`);
 

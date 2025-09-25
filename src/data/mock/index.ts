@@ -4,14 +4,11 @@
  */
 
 // Common data (only remaining files)
-export * from './common/countries';
-export * from './common/regions';
-export * from './common/hotels';
 export * from './common/continents';
 
 // Mock functions for compatibility with existing components
 
-import { TravelPackage } from '@/types/destinations';
+import { TravelPackage, Hotel } from '@/types/destinations';
 
 /**
  * Get all travel packages (placeholder - returns empty array since provider packages removed)
@@ -23,19 +20,20 @@ export function getAllPackages(): TravelPackage[] {
 
 /**
  * Get all travel packages for a specific hotel
- * @param hotelId Hotel ID
  * @returns Empty array
  */
-export function getAllPackagesByHotel(hotelId: string): TravelPackage[] {
+export function getAllPackagesByHotel(_hotelId: string): TravelPackage[] {
+  // Provider package data was removed from the mock dataset. Return an
+  // empty array as a placeholder. Calling code should handle empty results.
   return [];
 }
 
 /**
  * Get all travel packages from a specific departure city
- * @param departureCity Departure city ID
  * @returns Empty array
  */
-export function getAllPackagesByDepartureCity(departureCity: string): TravelPackage[] {
+export function getAllPackagesByDepartureCity(_departureCityId: string): TravelPackage[] {
+  // Placeholder - return empty array
   return [];
 }
 
@@ -54,10 +52,28 @@ export function getMealPlanById(_id: string): { id: string; name: string; code: 
   return null;
 }
 
+/**
+ * Get hotel by ID
+ * Placeholder implementation: returns null because concrete hotel data
+ * has been removed from the lightweight mock dataset. Components should
+ * handle null gracefully (redirects or user-friendly messages).
+ */
+export function getHotelById(_id: string): Hotel | null {
+  return null;
+}
+
 export function getAreaById(_id: string) {
   return null;
 }
 
 export function getAreasByRegion(_regionId: string) {
+  return [];
+}
+
+/**
+ * Get hotels for an area
+ * Placeholder - returns empty array
+ */
+export function getHotelsByArea(_areaId: string) {
   return [];
 }
