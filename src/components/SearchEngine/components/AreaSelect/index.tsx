@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Check, ChevronDown, ChevronRight } from 'lucide-react';
 import { travelData } from '@/lib/travel-data';
+import { availabilityValidator } from '@/lib/availability-validator';
 
 export interface AreaSelectProps {
   selectedAreas: string[];
@@ -132,7 +133,24 @@ export default function AreaSelect({ selectedAreas, onSelectAction, destinationI
         const regionsData = await travelData.getRegions(fromCityId, destinationId);
         console.log('✅ AreaSelect Got regions count:', regionsData?.length);
 
+        // TEMPORARILY DISABLE region filtering due to API issues
+        console.log('⚠️  Region filtering temporarily disabled');
         setRegions(regionsData || []);
+
+        // TODO: Re-enable when API is stable
+        // if (regionsData && regionsData.length > 0) {
+        //   const availableRegions = await availabilityValidator.filterAvailableRegions(
+        //     regionsData,
+        //     destinationId,
+        //     fromCityId
+        //   ).catch(error => {
+        //     console.warn('Failed to filter regions by availability:', error);
+        //     return regionsData;
+        //   });
+        //   setRegions(availableRegions);
+        // } else {
+        //   setRegions(regionsData || []);
+        // }
       } catch (error) {
         console.error('❌ AreaSelect Failed to load regions:', error);
         setRegions([]);

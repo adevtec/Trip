@@ -108,15 +108,74 @@ export class JoinUpProvider extends TravelProvider {
           };
         }
       } else {
-        // If no destination specified, skip search
-        console.log('⚠️ JoinUp search skipped: no destination specified');
-        return {
-          provider: 'joinup',
-          offers: [],
-          totalCount: 0,
-          searchTime: Date.now() - startTime,
-          success: true
-        };
+        // If no destination specified, search all destinations for this city
+        console.log('🌍 JoinUp searching all destinations for city:', city.name);
+
+        try {
+          const allDestinations = await fetchDestinations(city.id);
+          const allOffers: any[] = [];
+
+          // Search each destination (limited to prevent too many API calls)
+          const destinationsToSearch = allDestinations.slice(0, 3); // Limit to first 3 destinations
+          console.log(`🔍 Searching ${destinationsToSearch.length} destinations for city ${city.name}`);
+
+          for (const dest of destinationsToSearch) {
+            const destSearchParams = {
+              cityId: city.id,
+              destinationId: dest.id,
+              adults: params.adults || 2,
+              children: params.children || 0,
+              checkin: params.departureDate ? params.departureDate.toISOString().split('T')[0] : undefined,
+              nights: params.nights || 7
+            };
+
+            try {
+              const destResult = await searchOffers(destSearchParams);
+              if (destResult.success && destResult.offers) {
+                allOffers.push(...destResult.offers);
+              }
+            } catch (error) {
+              console.warn(`Failed to search destination ${dest.name}:`, error);
+            }
+          }
+
+          console.log(`✅ Found ${allOffers.length} offers across all destinations for ${city.name}`);
+
+          // Load hotel images for each offer
+          const offersWithImages = await Promise.all(
+            allOffers.map(async (offer: any) => {
+              if (offer.hotelKey) {
+                try {
+                  const hotelInfo = await getHotelInfo(offer.hotelKey);
+                  if (hotelInfo.success && hotelInfo.hotel?.images) {
+                    offer.hotel.images = hotelInfo.hotel.images;
+                  }
+                } catch (error) {
+                  console.warn(`Failed to load hotel images for ${offer.hotelKey}:`, error);
+                }
+              }
+              return offer;
+            })
+          );
+
+          return {
+            provider: 'joinup',
+            offers: offersWithImages,
+            totalCount: offersWithImages.length,
+            searchTime: Date.now() - startTime,
+            success: true
+          };
+        } catch (error) {
+          console.error('Failed to search all destinations:', error);
+          return {
+            provider: 'joinup',
+            offers: [],
+            totalCount: 0,
+            searchTime: Date.now() - startTime,
+            success: false,
+            error: `Failed to search all destinations: ${error instanceof Error ? error.message : 'Unknown error'}`
+          };
+        }
       }
 
       // Convert search parameters to JoinUp format

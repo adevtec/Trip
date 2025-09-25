@@ -127,7 +127,14 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
   };
 
   const hasTripOnDate = (date: Date): Trip | undefined => {
-    return allTrips.find(trip => 
+    // Don't show trips for past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (date < today) {
+      return undefined;
+    }
+
+    return allTrips.find(trip =>
       trip.date.getDate() === date.getDate() &&
       trip.date.getMonth() === date.getMonth() &&
       trip.date.getFullYear() === date.getFullYear()
@@ -142,22 +149,38 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
 
   const renderCalendarDays = () => {
     const days = [];
-    const daysInMonth = getDaysInMonth(CURRENT_YEAR, selectedMonth);
-    const firstDay = getFirstDayOfMonth(CURRENT_YEAR, selectedMonth);
+    // Handle next year months (selectedMonth >= 12)
+    const calendarYear = selectedMonth >= 12 ? CURRENT_YEAR + 1 : CURRENT_YEAR;
+    const calendarMonth = selectedMonth >= 12 ? selectedMonth - 12 : selectedMonth;
+
+    const daysInMonth = getDaysInMonth(calendarYear, calendarMonth);
+    const firstDay = getFirstDayOfMonth(calendarYear, calendarMonth);
     const totalDays = Math.ceil((daysInMonth + firstDay) / 7) * 7;
-  
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     for (let i = 0; i < totalDays; i++) {
       const dayNumber = i - firstDay + 1;
-      const currentDayDate = new Date(CURRENT_YEAR, selectedMonth, dayNumber);
+      const currentDayDate = new Date(calendarYear, calendarMonth, dayNumber);
       const trip = hasTripOnDate(currentDayDate);
-      
+      const isPastDate = dayNumber > 0 && dayNumber <= daysInMonth && currentDayDate < today;
+
+      let className = 'group relative p-1.5 text-center ';
+      if (isPastDate) {
+        className += 'text-gray-300'; // Very light gray for past dates
+      } else if (trip) {
+        className += 'text-gray-900 font-bold cursor-pointer';
+      } else {
+        className += 'text-gray-500';
+      }
+
       days.push(
-        <div 
-          key={i} 
-          className={`group relative p-1.5 text-center ${trip ? 'text-gray-900 font-bold cursor-pointer' : 'text-gray-500'}`}
-          onMouseEnter={() => setHoveredDate(currentDayDate)}
+        <div
+          key={i}
+          className={className}
+          onMouseEnter={() => !isPastDate && setHoveredDate(currentDayDate)}
           onMouseLeave={() => setHoveredDate(null)}
-          onClick={() => trip && handleDateClick(currentDayDate, trip)}
+          onClick={() => !isPastDate && trip && handleDateClick(currentDayDate, trip)}
         >
           {dayNumber > 0 && dayNumber <= daysInMonth ? dayNumber : ''}
           {hoveredDate?.getDate() === dayNumber && trip && (
@@ -198,7 +221,7 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
             {MONTHS.map((month, index) => {
               // Only show current and future months
               if (index < CURRENT_MONTH) return null;
-              
+
               return (
                 <button
                   key={month}
@@ -212,11 +235,11 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
           </div>
           <div className="text-gray-400 mt-2 text-sm">{CURRENT_YEAR + 1}</div>
           <div className="mt-1 space-y-1">
-            {MONTHS.slice(0, CURRENT_MONTH).map((month, index) => (
+            {MONTHS.map((month, index) => (
               <button
-                key={month}
-                onClick={() => setSelectedMonth(index)}
-                className="text-left w-full py-0.5 text-sm text-gray-800 px-3 font-medium"
+                key={`${CURRENT_YEAR + 1}-${month}`}
+                onClick={() => setSelectedMonth(index + 12)} // Offset by 12 for next year
+                className={`text-left w-full py-0.5 text-sm ${(index + 12) === selectedMonth ? 'bg-white rounded-xl px-3 shadow-sm font-bold' : 'text-gray-800 px-3 font-medium'}`}
               >
                 {month}
               </button>
@@ -226,7 +249,10 @@ const DepartureCalendar = ({ departureCities, isOpen, onClose, onDateSelect }: D
 
         <div className="flex-1 p-4 relative">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-bold">{MONTHS[selectedMonth]}</h2>
+            <h2 className="text-xl font-bold">
+              {MONTHS[selectedMonth >= 12 ? selectedMonth - 12 : selectedMonth]}
+              {selectedMonth >= 12 && <span className="text-gray-500 text-lg ml-2">{CURRENT_YEAR + 1}</span>}
+            </h2>
             <div className="text-base">
               Väljumine: <span className="font-bold text-orange-500">{departureCities.map(city => city.name).join(', ')}</span>
             </div>

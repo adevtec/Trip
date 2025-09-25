@@ -3,6 +3,7 @@
 import {useEffect, useRef, useState} from 'react';
 import {Check, Search} from 'lucide-react';
 import {travelData, type TravelDestination} from '@/lib/travel-data';
+import { availabilityValidator } from '@/lib/availability-validator';
 
 export interface RegionSelectProps {
   selectedCity: TravelDestination | null;
@@ -45,7 +46,21 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
             new Map(allDestinations.map(dest => [dest.name.toLowerCase(), dest])).values()
           );
 
-          setDestinations(uniqueDestinations);
+          // TEMPORARILY DISABLE availability filtering due to API issues
+          console.log('⚠️  Availability filtering temporarily disabled');
+          const availableDestinations = uniqueDestinations;
+
+          // TODO: Re-enable when API is stable
+          // const availableDestinations = await availabilityValidator.filterAvailableDestinations(
+          //   uniqueDestinations,
+          //   allAvailableCities[0]?.id || 'default'
+          // ).catch(error => {
+          //   console.warn('Failed to filter destinations by availability:', error);
+          //   return uniqueDestinations;
+          // });
+
+          console.log('✅ Available destinations:', availableDestinations.length, 'out of', uniqueDestinations.length);
+          setDestinations(availableDestinations);
         } catch (error) {
           console.error('Failed to load default destinations:', error);
           setDestinations([]);
@@ -75,8 +90,21 @@ export default function RegionSelect({ selectedCity, onSelectAction, selectedDep
           new Map(allDestinations.map(dest => [dest.name.toLowerCase(), dest])).values()
         );
 
-        console.log(`🎯 Final destinations (${uniqueDestinations.length}):`, uniqueDestinations);
-        setDestinations(uniqueDestinations);
+        // TEMPORARILY DISABLE availability filtering due to API issues
+        console.log('⚠️  Availability filtering temporarily disabled');
+        const availableDestinations = uniqueDestinations;
+
+        // TODO: Re-enable when API is stable
+        // const availableDestinations = await availabilityValidator.filterAvailableDestinations(
+        //   uniqueDestinations,
+        //   selectedDepartureCities[0] || 'default'
+        // ).catch(error => {
+        //   console.warn('Failed to filter destinations by availability:', error);
+        //   return uniqueDestinations;
+        // });
+
+        console.log(`✅ Available destinations: ${availableDestinations.length} out of ${uniqueDestinations.length}`);
+        setDestinations(availableDestinations);
       } catch (error) {
         console.error('Failed to load destinations:', error);
       } finally {

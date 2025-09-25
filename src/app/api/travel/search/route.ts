@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     const results = await aggregator.search(params);
 
     // Get combined offers if requested
-    const sortBy = searchParams.get('sortBy') as 'price' | 'rating' | 'provider' || 'price';
+    const sortBy = searchParams.get('sortBy') as 'price' | 'rating' | 'provider' | 'popularity' || 'popularity';
     const combined = searchParams.get('combined') === 'true';
 
     if (combined) {

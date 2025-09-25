@@ -111,29 +111,28 @@ export default function SearchEngine() {
     console.log('Travelers:', travelers);
     console.log('Advanced options:', advancedOptions);
 
-    if (selectedDepartureCities.length === 0) {
-      alert('Palun vali lähtekoht');
-      return;
-    }
+    // More flexible validation - allow searching without all parameters
+    // Use default dates if not specified (starting from today)
+    const searchDateRange = dateRange?.from ? dateRange : {
+      from: new Date(), // Today
+      to: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) // +14 days default
+    };
 
-    if (!selectedCity) {
-      alert('Palun vali sihtkoht');
-      return;
-    }
+    // If no departure cities selected, use all available cities
+    const searchDepartureCities = selectedDepartureCities.length > 0
+      ? selectedDepartureCities
+      : departureCities.map(city => city.id); // Use all cities as default
 
-    if (!dateRange?.from) {
-      alert('Palun vali väljumiskuupäev');
-      return;
-    }
+    // If no destination selected, search will return results from all destinations
 
     setIsSearching(true);
 
     try {
       const searchParams = {
-        departureCities: selectedDepartureCities,
-        destination: selectedCity.id,
-        startDate: dateRange.from.toISOString().split('T')[0],
-        endDate: dateRange.to?.toISOString().split('T')[0],
+        departureCities: searchDepartureCities,
+        destination: selectedCity?.id, // Optional - can be undefined
+        startDate: searchDateRange.from.toISOString().split('T')[0],
+        endDate: searchDateRange.to?.toISOString().split('T')[0],
         adults: travelers.adults,
         children: travelers.children,
         childrenAges: travelers.childrenAges,
@@ -141,7 +140,7 @@ export default function SearchEngine() {
         mealPlans: advancedOptions.mealPlans,
         hotelRating: advancedOptions.hotelRating,
         hotelNames: advancedOptions.hotelNames,
-        areas: selectedAreaIds
+        areas: selectedAreaIds.length > 0 ? selectedAreaIds : undefined // Optional
       };
 
       console.log('Search params:', searchParams);
@@ -161,9 +160,9 @@ export default function SearchEngine() {
 
       // Navigate to search results page with params
       const params = new URLSearchParams({
-        from: selectedDepartureCities.join(','),
-        to: selectedCity.name,
-        date: dateRange.from.toISOString().split('T')[0],
+        from: searchDepartureCities.join(','),
+        to: selectedCity?.name || 'any',
+        date: searchDateRange.from.toISOString().split('T')[0],
         adults: travelers.adults.toString(),
         children: travelers.children.toString()
       });

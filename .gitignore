@@ -43,7 +43,7 @@ wp-content
 joinup-api/*
 old/
 .idea/
-md_failid
+md_failid#
 CLAUDE.md
 CLEANUP_LOG.md
 DETAILED_PROBLEM_ANALYSIS.md

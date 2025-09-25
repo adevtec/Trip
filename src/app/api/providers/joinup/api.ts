@@ -418,7 +418,7 @@ export async function searchOffers(searchParams: any): Promise<{ success: boolea
     const checkinDate = searchParams.checkin; // Format: YYYY-MM-DD
     const checkinFormatted = checkinDate.replace(/-/g, ''); // Convert to YYYYMMDD
     
-    const apiUrl = `${JOINUP_API_BASE_URL}&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_PRICES` +
+    let apiUrl = `${JOINUP_API_BASE_URL}&version=1.0&oauth_token=${credentials.oauth_token}&type=json&action=SearchTour_PRICES` +
       `&TOWNFROMINC=${searchParams.cityId}` +
       `&STATEINC=${searchParams.destinationId}` +
       `&CHECKIN_BEG=${checkinFormatted}` +
@@ -430,6 +430,11 @@ export async function searchOffers(searchParams: any): Promise<{ success: boolea
       `&CURRENCY=3` + // EUR currency ID (from documentation)
       `&FREIGHT=0` + // Show all tours
       `&FILTER=1`; // Hide stopsale hotels
+
+    // Add region filter if specified (for availability testing)
+    if (searchParams.regionId) {
+      apiUrl += `&TOWNINC=${searchParams.regionId}`;
+    }
 
     console.log('🔍 JoinUp SearchTour_PRICES API URL:', apiUrl.replace(credentials.oauth_token, 'TOKEN_HIDDEN'));
 

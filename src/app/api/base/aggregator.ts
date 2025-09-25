@@ -86,7 +86,7 @@ export class TravelAggregator {
   /**
    * Get combined and sorted offers from all providers
    */
-  async getCombinedOffers(params: SearchParams, sortBy: 'price' | 'rating' | 'provider' = 'price'): Promise<TravelOffer[]> {
+  async getCombinedOffers(params: SearchParams, sortBy: 'price' | 'rating' | 'provider' | 'popularity' = 'popularity'): Promise<TravelOffer[]> {
     const results = await this.search(params);
     
     // Combine all offers
@@ -145,7 +145,7 @@ export class TravelAggregator {
   /**
    * Sort offers by different criteria
    */
-  private sortOffers(offers: TravelOffer[], sortBy: 'price' | 'rating' | 'provider'): TravelOffer[] {
+  private sortOffers(offers: TravelOffer[], sortBy: 'price' | 'rating' | 'provider' | 'popularity'): TravelOffer[] {
     return offers.sort((a, b) => {
       switch (sortBy) {
         case 'price':
@@ -154,6 +154,10 @@ export class TravelAggregator {
           return b.hotel.rating - a.hotel.rating;
         case 'provider':
           return a.provider.localeCompare(b.provider);
+        case 'popularity':
+          // Sort by rating first, then by price (lower is better)
+          const ratingDiff = b.hotel.rating - a.hotel.rating;
+          return ratingDiff !== 0 ? ratingDiff : a.price.total - b.price.total;
         default:
           return 0;
       }
